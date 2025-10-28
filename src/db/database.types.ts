@@ -63,8 +63,8 @@ export interface Database {
       };
       projects: {
         Row: {
-          created_at: string | null;
-          demo_url: string | null;
+          created_at: string;
+          demo_url: string;
           description: string;
           id: string;
           name: string;
@@ -72,7 +72,7 @@ export interface Database {
           repo_url: string | null;
           status: Database["public"]["Enums"]["project_status"];
           technologies: string[];
-          updated_at: string | null;
+          updated_at: string;
           user_id: string;
         };
         Insert: {
