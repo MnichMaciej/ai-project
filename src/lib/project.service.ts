@@ -1,5 +1,5 @@
 import { SupabaseClient } from "../db/supabase.client";
-import { ProjectDto, ProjectsListResponse, ProjectStatus, CreateProjectDto } from "../types";
+import { ProjectDto, ProjectsListResponse, ProjectStatus, CreateProjectDto, UpdateProjectDto } from "../types";
 import type { Database } from "../db/database.types";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -133,6 +133,87 @@ export class ProjectService {
     } catch (error) {
       console.error("Error in createProject:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Updates an existing project with partial data
+   * Verifies ownership before update, then maps camelCase DTO to snake_case DB columns
+   * Returns the updated project as ProjectDto, or throws error if not found or not owner
+   */
+  async updateProject(id: string, updateDto: UpdateProjectDto, userId: string): Promise<ProjectDto> {
+    try {
+      // Step 1: Verify project exists and user is the owner
+      const { data: existingProject, error: fetchError } = await this.supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !existingProject) {
+        throw { code: 404, message: "Project not found" };
+      }
+
+      // Step 2: Check ownership
+      if (existingProject.user_id !== userId) {
+        throw { code: 403, message: "Not owner" };
+      }
+
+      // Step 3: Map camelCase DTO fields to snake_case for database update
+      const dbUpdate: Record<string, unknown> = {};
+      if (updateDto.name !== undefined) dbUpdate.name = updateDto.name;
+      if (updateDto.description !== undefined) dbUpdate.description = updateDto.description;
+      if (updateDto.technologies !== undefined) dbUpdate.technologies = updateDto.technologies;
+      if (updateDto.status !== undefined) dbUpdate.status = updateDto.status;
+      if (updateDto.repoUrl !== undefined) dbUpdate.repo_url = updateDto.repoUrl;
+      if (updateDto.demoUrl !== undefined) dbUpdate.demo_url = updateDto.demoUrl;
+      if (updateDto.previewUrl !== undefined) dbUpdate.preview_url = updateDto.previewUrl;
+
+      // Step 4: Perform update and fetch updated record
+      const { data: updatedProject, error: updateError } = await this.supabase
+        .from("projects")
+        .update(dbUpdate)
+        .eq("id", id)
+        .select("id, name, description, technologies, status, repo_url, demo_url, preview_url, created_at, updated_at")
+        .single();
+
+      if (updateError) {
+        console.error("Database error updating project:", updateError);
+        throw { code: 500, message: "Failed to update project" };
+      }
+
+      if (!updatedProject) {
+        console.error("No data returned from update operation");
+        throw { code: 500, message: "Failed to update project" };
+      }
+
+      // Step 5: Validate status enum
+      if (!Object.values(ProjectStatus).includes(updatedProject.status as ProjectStatus)) {
+        throw { code: 500, message: `Invalid project status returned: ${updatedProject.status}` };
+      }
+
+      // Step 6: Map DB result (snake_case) to DTO (camelCase)
+      const projectDto: ProjectDto = {
+        id: updatedProject.id,
+        name: updatedProject.name,
+        description: updatedProject.description,
+        technologies: updatedProject.technologies,
+        status: updatedProject.status as ProjectStatus,
+        repoUrl: updatedProject.repo_url ?? null,
+        demoUrl: updatedProject.demo_url ?? null,
+        previewUrl: updatedProject.preview_url ?? null,
+        createdAt: updatedProject.created_at,
+        updatedAt: updatedProject.updated_at,
+      };
+
+      return projectDto;
+    } catch (error) {
+      // Re-throw custom errors with specific codes
+      if (error && typeof error === "object" && "code" in error) {
+        throw error;
+      }
+      console.error("Error in updateProject:", error);
+      throw { code: 500, message: "Internal server error" };
     }
   }
 }

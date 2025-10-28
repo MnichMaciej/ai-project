@@ -21,3 +21,12 @@ export const createProjectSchema = z.object({
 });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
+
+// Schema for updating a project - validates UpdateProjectDto (all fields optional, but at least one required)
+export const updateProjectSchema = createProjectSchema
+  .partial()
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one field must be provided for update",
+  });
+
+export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
