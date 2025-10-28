@@ -54,6 +54,11 @@ export interface GenerateProjectAIResponse {
   queryCount: number;
 }
 
+// Response for successful project deletion
+export interface DeleteProjectResponse {
+  message: string;
+}
+
 // Note: User-related DTOs are not fully defined in the API plan endpoints, but for completeness:
 // Basic user response (excludes sensitive fields)
 export interface UserDto {

@@ -30,3 +30,10 @@ export const updateProjectSchema = createProjectSchema
   });
 
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
+
+// Schema for deleting a project - validates that ID is a valid UUID
+export const deleteProjectSchema = z.object({
+  id: z.string().uuid("Invalid project ID format"),
+});
+
+export type DeleteProjectInput = z.infer<typeof deleteProjectSchema>;

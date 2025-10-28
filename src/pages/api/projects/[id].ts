@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { ProjectService } from "../../../lib/project.service";
-import { updateProjectSchema } from "../../../lib/validators/project.validators";
+import { updateProjectSchema, deleteProjectSchema } from "../../../lib/validators/project.validators";
 import { DEFAULT_USER_ID } from "../../../db/supabase.client";
 
 /**
@@ -106,6 +106,64 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
     }
 
     console.error("Error in PATCH /api/projects/[id]:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * DELETE handler for deleting a project by ID
+ * Validates project ID UUID format, verifies ownership, and deletes the project
+ * Returns 200 OK with success message or appropriate error response (400, 403, 404, 500)
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    // Extract project ID from URL parameter
+    const projectId = params.id;
+    if (!projectId) {
+      return new Response(JSON.stringify({ error: "Project ID is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate project ID format using Zod schema
+    const parseResult = deleteProjectSchema.safeParse({ id: projectId });
+    if (!parseResult.success) {
+      const errors = parseResult.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`);
+      return new Response(JSON.stringify({ error: "Invalid project ID format", details: errors }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Initialize service and delete project
+    const projectService = new ProjectService(locals.supabase);
+    await projectService.deleteProject(parseResult.data.id, DEFAULT_USER_ID);
+
+    // Return 200 OK with success message
+    return new Response(
+      JSON.stringify({
+        message: "Project deleted",
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  } catch (error) {
+    // Handle specific error types from service
+    if (error && typeof error === "object" && "code" in error && "message" in error) {
+      const err = error as { code: number; message: string };
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: err.code,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    console.error("Error in DELETE /api/projects/[id]:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

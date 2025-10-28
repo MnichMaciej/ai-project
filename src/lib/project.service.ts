@@ -216,4 +216,43 @@ export class ProjectService {
       throw { code: 500, message: "Internal server error" };
     }
   }
+
+  /**
+   * Deletes a project by ID, verifying ownership before deletion
+   * Returns a success message on deletion or throws error if not found or not owner
+   */
+  async deleteProject(id: string, userId: string): Promise<void> {
+    try {
+      // Step 1: Verify project exists and user is the owner
+      const { data: existingProject, error: fetchError } = await this.supabase
+        .from("projects")
+        .select("user_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError || !existingProject) {
+        throw { code: 404, message: "Project not found" };
+      }
+
+      // Step 2: Check ownership
+      if (existingProject.user_id !== userId) {
+        throw { code: 403, message: "Not owner" };
+      }
+
+      // Step 3: Delete the project (cascade to ai_queries via database triggers)
+      const { error: deleteError } = await this.supabase.from("projects").delete().eq("id", id);
+
+      if (deleteError) {
+        console.error("Database error deleting project:", deleteError);
+        throw { code: 500, message: "Failed to delete project" };
+      }
+    } catch (error) {
+      // Re-throw custom errors with specific codes
+      if (error && typeof error === "object" && "code" in error) {
+        throw error;
+      }
+      console.error("Error in deleteProject:", error);
+      throw { code: 500, message: "Internal server error" };
+    }
+  }
 }
