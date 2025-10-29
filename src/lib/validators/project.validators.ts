@@ -37,3 +37,13 @@ export const deleteProjectSchema = z.object({
 });
 
 export type DeleteProjectInput = z.infer<typeof deleteProjectSchema>;
+
+// Schema for AI generation request - validates fileLinks array and GitHub URLs
+export const generateProjectAISchema = z.object({
+  fileLinks: z
+    .array(z.string().url("Each item must be a valid URL"))
+    .min(1, "At least one file link is required")
+    .max(8, "Maximum 8 file links allowed"),
+});
+
+export type GenerateProjectAIInput = z.infer<typeof generateProjectAISchema>;
