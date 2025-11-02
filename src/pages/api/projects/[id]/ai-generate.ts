@@ -4,6 +4,7 @@ import { ProjectService } from "../../../../lib/project.service";
 import { generateProjectAISchema } from "../../../../lib/validators/project.validators";
 import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
 import type { GenerateProjectAIResponse } from "../../../../types";
+import { OpenRouterError, ValidationError } from "../../../../lib/openrouter.service";
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
   const MAX_QUERIES_PER_PROJECT = 5;
@@ -103,7 +104,35 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       aiResponse = parsedResponse;
     } catch (error) {
       console.error("Error calling AI service:", error);
-      return new Response(JSON.stringify({ error: "Failed to generate AI response" }), {
+
+      // Handle specific error types from OpenRouterService
+      if (error instanceof OpenRouterError) {
+        const statusCode = error.statusCode || 500;
+        const errorMessage =
+          statusCode === 401
+            ? "Invalid API key"
+            : statusCode === 429
+              ? "Rate limit exceeded. Please try again later."
+              : statusCode >= 500
+                ? "AI service is temporarily unavailable. Please try again later."
+                : error.message || "Failed to generate AI response";
+
+        return new Response(JSON.stringify({ error: errorMessage }), {
+          status: statusCode === 429 ? 429 : statusCode >= 500 ? 503 : 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (error instanceof ValidationError) {
+        return new Response(JSON.stringify({ error: `Validation error: ${error.message}` }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Generic error handling
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate AI response";
+      return new Response(JSON.stringify({ error: errorMessage }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });

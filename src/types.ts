@@ -68,3 +68,70 @@ export interface UserDto {
 }
 
 // For auth responses, Supabase session types can be used directly, but custom locking fields may need extension if implemented
+
+// OpenRouter Service Types
+export type MessageRole = "system" | "user" | "assistant";
+
+export interface Message {
+  role: MessageRole;
+  content: string;
+}
+
+export interface JsonSchema {
+  type: string;
+  properties?: Record<string, JsonSchema>;
+  items?: JsonSchema;
+  required?: string[];
+  additionalProperties?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ResponseFormat {
+  type: "json_schema";
+  jsonSchema: {
+    name: string;
+    strict: boolean;
+    schema: JsonSchema;
+  };
+}
+
+export interface ModelParameters {
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  [key: string]: unknown;
+}
+
+export interface GenerateOptions {
+  model?: string;
+  parameters?: ModelParameters;
+  responseFormat?: ResponseFormat;
+}
+
+export interface GenerateResponse {
+  content: string;
+  structuredData?: unknown;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description?: string;
+  pricing?: {
+    prompt: string;
+    completion: string;
+  };
+  contextLength?: number;
+  architecture?: {
+    modality: string;
+    tokenizer: string;
+    instructType?: string;
+  };
+}
