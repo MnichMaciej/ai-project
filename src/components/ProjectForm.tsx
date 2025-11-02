@@ -10,17 +10,18 @@ import { ProjectStatus } from "@/types";
 import { X, Plus, Loader2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 
-// Form data type - matches the schema from useProjectForm
-// Import the type from the hook to ensure consistency
+// Form data types - matches the schema from hooks
 import type { CreateProjectFormData } from "@/lib/hooks/useProjectForm";
+import type { UpdateProjectFormData } from "@/lib/hooks/useProjectEditForm";
 
-type ProjectFormData = CreateProjectFormData;
+type ProjectFormData = CreateProjectFormData | UpdateProjectFormData;
 
 interface ProjectFormProps {
   form: UseFormReturn<ProjectFormData>;
   onSubmit: (data: ProjectFormData) => Promise<void>;
   isSubmitting: boolean;
   onCancel: () => void;
+  mode?: "create" | "edit";
 }
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -34,7 +35,7 @@ const statusLabels: Record<ProjectStatus, string> = {
  * ProjectForm - Main form component for creating/editing projects
  * Handles all form fields, validation, and submission
  */
-export function ProjectForm({ form, onSubmit, isSubmitting, onCancel }: ProjectFormProps) {
+export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "create" }: ProjectFormProps) {
   const {
     register,
     handleSubmit,
@@ -71,7 +72,9 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel }: ProjectF
     <Card>
       <CardHeader>
         <CardTitle>Szczegóły projektu</CardTitle>
-        <CardDescription>Wypełnij wszystkie wymagane pola, aby dodać projekt</CardDescription>
+        <CardDescription>
+          {mode === "edit" ? "Edytuj informacje o projekcie" : "Wypełnij wszystkie wymagane pola, aby dodać projekt"}
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-6">
@@ -338,6 +341,8 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel }: ProjectF
                 <Loader2 className="size-4 mr-2 animate-spin" />
                 Zapisywanie...
               </>
+            ) : mode === "edit" ? (
+              "Zaktualizuj projekt"
             ) : (
               "Zapisz projekt"
             )}

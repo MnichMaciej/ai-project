@@ -7,7 +7,7 @@ import type { CreateProjectDto } from "@/types";
 import { ProjectStatus as ProjectStatusEnum } from "@/types";
 
 // Extended client-side validation schema with stricter rules
-const createProjectFormSchema = z.object({
+export const createProjectFormSchema = z.object({
   name: z.string().min(1, "Nazwa projektu jest wymagana").max(100, "Nazwa projektu nie może przekraczać 100 znaków"),
   description: z
     .string()
@@ -46,6 +46,80 @@ type CreateProjectFormData = z.infer<typeof createProjectFormSchema>;
 // Export the type for use in components
 export type { CreateProjectFormData };
 
+/**
+ * Helper function to transform form data by trimming strings
+ */
+export function transformFormData(data: {
+  name?: string;
+  description?: string;
+  technologies?: string[];
+  status?: ProjectStatusEnum;
+  repoUrl?: string | null;
+  demoUrl?: string | null;
+  previewUrl?: string | null;
+}): {
+  name?: string;
+  description?: string;
+  technologies?: string[];
+  status?: ProjectStatusEnum;
+  repoUrl?: string | null;
+  demoUrl?: string | null;
+  previewUrl?: string | null;
+} {
+  const transformed: {
+    name?: string;
+    description?: string;
+    technologies?: string[];
+    status?: ProjectStatusEnum;
+    repoUrl?: string | null;
+    demoUrl?: string | null;
+    previewUrl?: string | null;
+  } = {};
+
+  if (data.name !== undefined) {
+    transformed.name = data.name.trim();
+  }
+  if (data.description !== undefined) {
+    transformed.description = data.description.trim();
+  }
+  if (data.technologies !== undefined) {
+    transformed.technologies = data.technologies.map((tech) => tech.trim()).filter((tech) => tech.length > 0);
+  }
+  if (data.status !== undefined) {
+    transformed.status = data.status;
+  }
+  if (data.repoUrl !== undefined) {
+    transformed.repoUrl = data.repoUrl?.trim() || null;
+  }
+  if (data.demoUrl !== undefined) {
+    transformed.demoUrl = data.demoUrl?.trim() || null;
+  }
+  if (data.previewUrl !== undefined) {
+    transformed.previewUrl = data.previewUrl?.trim() || null;
+  }
+
+  return transformed;
+}
+
+/**
+ * Helper function to map server validation errors to form fields
+ */
+export function mapServerErrorsToForm<T extends Record<string, unknown>>(
+  errorDetails: string[] | undefined,
+  form: ReturnType<typeof useForm<T>>
+): void {
+  if (errorDetails && Array.isArray(errorDetails)) {
+    errorDetails.forEach((detail) => {
+      const match = detail.match(/^([^.]+):\s*(.+)$/);
+      if (match) {
+        const [, fieldPath, message] = match;
+        const fieldName = fieldPath.split(".")[0] as keyof T;
+        form.setError(fieldName, { type: "server", message });
+      }
+    });
+  }
+}
+
 interface UseProjectFormReturn {
   form: ReturnType<typeof useForm<CreateProjectFormData>>;
   isSubmitting: boolean;
@@ -78,15 +152,7 @@ export function useProjectForm(): UseProjectFormReturn {
 
     try {
       // Transform form data to CreateProjectDto format
-      const projectData: CreateProjectDto = {
-        name: data.name.trim(),
-        description: data.description.trim(),
-        technologies: data.technologies.map((tech) => tech.trim()).filter((tech) => tech.length > 0),
-        status: data.status,
-        repoUrl: data.repoUrl?.trim() || null,
-        demoUrl: data.demoUrl?.trim() || null,
-        previewUrl: data.previewUrl?.trim() || null,
-      };
+      const projectData: CreateProjectDto = transformFormData(data) as CreateProjectDto;
 
       const response = await fetch("/api/projects", {
         method: "POST",
@@ -107,16 +173,7 @@ export function useProjectForm(): UseProjectFormReturn {
           errorDetails = errorData.details;
 
           // Map server validation errors to form fields
-          if (errorDetails && Array.isArray(errorDetails)) {
-            errorDetails.forEach((detail) => {
-              const match = detail.match(/^([^.]+):\s*(.+)$/);
-              if (match) {
-                const [, fieldPath, message] = match;
-                const fieldName = fieldPath.split(".")[0] as keyof CreateProjectFormData;
-                form.setError(fieldName, { type: "server", message });
-              }
-            });
-          }
+          mapServerErrorsToForm(errorDetails, form);
         } catch {
           // If parsing fails, use default error message
         }

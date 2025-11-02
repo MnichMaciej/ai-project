@@ -1,0 +1,8 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import { ProjectEditView } from "../../../components/ProjectEditView";
+---
+
+<Layout title="Edytuj projekt - Portfolio Manager">
+  <ProjectEditView client:load projectId={Astro.params.id || ""} />
+</Layout>
