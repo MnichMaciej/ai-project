@@ -5,6 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import type { UpdateProjectDto, ProjectDto } from "@/types";
 import { createProjectFormSchema, transformFormData, mapServerErrorsToForm } from "@/lib/hooks/useProjectForm";
+import { fetchProjectQueryCount } from "@/lib/hooks/useProjectQueryCount";
 
 // Update form schema - partial schema for editing (all fields optional, but validate if provided)
 const updateProjectFormSchema = createProjectFormSchema.partial().superRefine((data, ctx) => {
@@ -42,6 +43,7 @@ interface UseProjectEditFormReturn {
   project: ProjectDto | null;
   onSubmit: (data: UpdateProjectFormData) => Promise<void>;
   error: AIErrorType | null;
+  queryCount: number;
 }
 
 /**
@@ -58,6 +60,7 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
   const [isLoading, setIsLoading] = React.useState(true);
   const [project, setProject] = React.useState<ProjectDto | null>(null);
   const [error, setError] = React.useState<AIErrorType | null>(null);
+  const [queryCount, setQueryCount] = React.useState(0);
 
   // Fetch project data on mount
   React.useEffect(() => {
@@ -99,6 +102,16 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
           demoUrl: projectData.demoUrl,
           previewUrl: projectData.previewUrl,
         });
+
+        // Fetch query count for AI generation
+        try {
+          const count = await fetchProjectQueryCount(projectId);
+          setQueryCount(count);
+        } catch (queryCountError) {
+          console.error("Error fetching query count:", queryCountError);
+          // Don't fail the whole operation if query count fails
+          setQueryCount(0);
+        }
       } catch (error) {
         console.error("Error fetching project:", error);
         toast.error("Nie udało się pobrać projektu. Spróbuj ponownie.");
@@ -194,5 +207,6 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
     project,
     onSubmit,
     error,
+    queryCount,
   };
 }

@@ -13,6 +13,8 @@ import type { UseFormReturn } from "react-hook-form";
 // Form data types - matches the schema from hooks
 import type { CreateProjectFormData } from "@/lib/hooks/useProjectForm";
 import type { UpdateProjectFormData } from "@/lib/hooks/useProjectEditForm";
+import { AISection } from "@/components/ai/AISection";
+import { useAIGeneration } from "@/lib/hooks/useAIGeneration";
 
 type ProjectFormData = CreateProjectFormData | UpdateProjectFormData;
 
@@ -22,6 +24,8 @@ interface ProjectFormProps {
   isSubmitting: boolean;
   onCancel: () => void;
   mode?: "create" | "edit";
+  projectId?: string | null;
+  initialQueryCount?: number;
 }
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -35,7 +39,15 @@ const statusLabels: Record<ProjectStatus, string> = {
  * ProjectForm - Main form component for creating/editing projects
  * Handles all form fields, validation, and submission
  */
-export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "create" }: ProjectFormProps) {
+export function ProjectForm({
+  form,
+  onSubmit,
+  isSubmitting,
+  onCancel,
+  mode = "create",
+  projectId = null,
+  initialQueryCount = 0,
+}: ProjectFormProps) {
   const {
     register,
     handleSubmit,
@@ -48,16 +60,23 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
   const watchedTechnologies = watch("technologies");
   const [newTechnology, setNewTechnology] = React.useState("");
 
+  // AI Generation hook
+  const aiGeneration = useAIGeneration({
+    projectId,
+    initialQueryCount,
+    form,
+  });
+
   const handleAddTechnology = () => {
     const trimmed = newTechnology.trim();
-    if (trimmed && !watchedTechnologies.includes(trimmed)) {
-      setValue("technologies", [...watchedTechnologies, trimmed], { shouldValidate: true });
+    if (trimmed && !watchedTechnologies?.includes(trimmed)) {
+      setValue("technologies", [...(watchedTechnologies ?? []), trimmed], { shouldValidate: true });
       setNewTechnology("");
     }
   };
 
   const handleRemoveTechnology = (index: number) => {
-    const updated = watchedTechnologies.filter((_, i) => i !== index);
+    const updated = watchedTechnologies?.filter((_, i) => i !== index) ?? [];
     setValue("technologies", updated, { shouldValidate: true });
   };
 
@@ -119,7 +138,7 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
               rows={5}
               maxLength={1000}
               className={
-                touchedFields.description && !errors.description && watch("description")?.length >= 10
+                touchedFields.description && !errors.description && (watch("description")?.length ?? 0) >= 10
                   ? "border-green-500 dark:border-green-600"
                   : ""
               }
@@ -128,7 +147,7 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
               <p className="text-xs text-muted-foreground">
                 {watch("description")?.length || 0} / 1000 znaków (minimum 10)
               </p>
-              {touchedFields.description && !errors.description && watch("description")?.length >= 10 && (
+              {touchedFields.description && !errors.description && (watch("description")?.length ?? 0) >= 10 && (
                 <p className="text-xs text-green-600 dark:text-green-500">✓ Wystarczająco długi</p>
               )}
             </div>
@@ -149,7 +168,7 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
               Technologie <span className="text-destructive">*</span>
             </Label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {watchedTechnologies.map((tech, index) => (
+              {watchedTechnologies?.map((tech, index) => (
                 <div
                   key={`${tech}-${index}`}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-secondary rounded-md text-sm"
@@ -175,7 +194,7 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
                 onKeyPress={handleTechnologyKeyPress}
                 placeholder="Dodaj technologię (Enter aby dodać)"
                 maxLength={50}
-                disabled={watchedTechnologies.length >= 10}
+                disabled={(watchedTechnologies?.length ?? 0) >= 10}
               />
               <Button
                 type="button"
@@ -184,8 +203,8 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
                 onClick={handleAddTechnology}
                 disabled={
                   !newTechnology.trim() ||
-                  watchedTechnologies.includes(newTechnology.trim()) ||
-                  watchedTechnologies.length >= 10
+                  watchedTechnologies?.includes(newTechnology.trim()) ||
+                  (watchedTechnologies?.length ?? 0) >= 10
                 }
                 aria-label="Dodaj technologię"
               >
@@ -193,14 +212,17 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
               </Button>
             </div>
             <div className="flex items-center justify-between">
-              {watchedTechnologies.length >= 10 && (
+              {(watchedTechnologies?.length ?? 0) >= 10 && (
                 <p className="text-xs text-muted-foreground">Maksymalnie 10 technologii</p>
               )}
-              {watchedTechnologies.length > 0 && watchedTechnologies.length < 10 && !errors.technologies && (
-                <p className="text-xs text-green-600 dark:text-green-500">
-                  ✓ {watchedTechnologies.length} {watchedTechnologies.length === 1 ? "technologia" : "technologie"}
-                </p>
-              )}
+              {(watchedTechnologies?.length ?? 0) > 0 &&
+                (watchedTechnologies?.length ?? 0) < 10 &&
+                !errors.technologies && (
+                  <p className="text-xs text-green-600 dark:text-green-500">
+                    ✓ {watchedTechnologies?.length ?? 0}{" "}
+                    {(watchedTechnologies?.length ?? 0) === 1 ? "technologia" : "technologie"}
+                  </p>
+                )}
             </div>
             {errors.technologies && (
               <p
@@ -212,6 +234,20 @@ export function ProjectForm({ form, onSubmit, isSubmitting, onCancel, mode = "cr
               </p>
             )}
           </div>
+
+          {/* AI Section - Only show in edit mode or when projectId is available */}
+          {mode === "edit" && projectId && (
+            <AISection
+              projectId={projectId}
+              queryCount={aiGeneration.state.queryCount}
+              aiState={aiGeneration.state}
+              onOpenInput={aiGeneration.openInput}
+              onCloseInput={aiGeneration.closeInput}
+              onFileLinksChange={aiGeneration.setFileLinks}
+              onFileLinksSubmit={aiGeneration.generateAI}
+              onValidateLinks={aiGeneration.validateLinks}
+            />
+          )}
 
           {/* Status Select */}
           <div className="space-y-2">

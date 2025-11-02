@@ -13,7 +13,7 @@ interface ProjectEditViewProps {
  * Manages form state, API integration, and rendering ProjectForm
  */
 export function ProjectEditView({ projectId }: ProjectEditViewProps) {
-  const { form, isSubmitting, isLoading, onSubmit, error } = useProjectEditForm(projectId);
+  const { form, isSubmitting, isLoading, onSubmit, error, queryCount } = useProjectEditForm(projectId);
 
   const handleCancel = () => {
     window.location.href = "/projects";
@@ -72,8 +72,15 @@ export function ProjectEditView({ projectId }: ProjectEditViewProps) {
         <p className="text-muted-foreground mt-2">Zaktualizuj informacje o projekcie</p>
       </div>
 
-      <ProjectForm form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} onCancel={handleCancel} mode="edit" />
+      <ProjectForm
+        form={form}
+        onSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+        onCancel={handleCancel}
+        mode="edit"
+        projectId={projectId}
+        initialQueryCount={queryCount}
+      />
     </div>
   );
 }
-
