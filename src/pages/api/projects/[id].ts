@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { ProjectService } from "../../../lib/project.service";
 import { updateProjectSchema, deleteProjectSchema } from "../../../lib/validators/project.validators";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
 
 /**
  * GET handler for fetching a single project by ID
@@ -9,6 +8,14 @@ import { DEFAULT_USER_ID } from "../../../db/supabase.client";
  */
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const projectId = params.id;
     if (!projectId) {
       return new Response(JSON.stringify({ error: "Project ID is required" }), {
@@ -18,7 +25,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     const projectService = new ProjectService(locals.supabase);
-    const { projects } = await projectService.fetchUserProjects(DEFAULT_USER_ID, {});
+    const { projects } = await projectService.fetchUserProjects(locals.user.id, {});
 
     const project = projects.find((p) => p.id === projectId);
 
@@ -49,6 +56,14 @@ export const GET: APIRoute = async ({ params, locals }) => {
  */
 export const PATCH: APIRoute = async ({ request, locals, params }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Extract and validate project ID from URL parameter
     const projectId = params.id;
     if (!projectId) {
@@ -82,7 +97,7 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
 
     // Initialize service and update project
     const projectService = new ProjectService(locals.supabase);
-    const updatedProject = await projectService.updateProject(projectId, parseResult.data, DEFAULT_USER_ID);
+    const updatedProject = await projectService.updateProject(projectId, parseResult.data, locals.user.id);
 
     // Return 200 OK with updated project and meta information
     return new Response(
@@ -120,6 +135,14 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
  */
 export const DELETE: APIRoute = async ({ params, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Extract project ID from URL parameter
     const projectId = params.id;
     if (!projectId) {
@@ -141,7 +164,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     // Initialize service and delete project
     const projectService = new ProjectService(locals.supabase);
-    await projectService.deleteProject(parseResult.data.id, DEFAULT_USER_ID);
+    await projectService.deleteProject(parseResult.data.id, locals.user.id);
 
     // Return 200 OK with success message
     return new Response(

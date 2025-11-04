@@ -1,12 +1,19 @@
 import type { APIRoute } from "astro";
 import { ProjectService } from "../../lib/project.service";
 import { projectsQuerySchema, createProjectSchema } from "../../lib/validators/project.validators";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
 
 export const prerender = false;
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Parse and validate query parameters
     const url = new URL(request.url);
     const queryResult = projectsQuerySchema.safeParse({
@@ -24,7 +31,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Initialize service and fetch projects
     const projectService = new ProjectService(locals.supabase);
-    const response = await projectService.fetchUserProjects(DEFAULT_USER_ID, queryResult.data);
+    const response = await projectService.fetchUserProjects(locals.user.id, queryResult.data);
 
     return new Response(JSON.stringify(response), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (error) {
@@ -43,6 +50,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Parse request body
     let body: unknown;
     try {
@@ -67,7 +82,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Initialize service and create project
     const projectService = new ProjectService(locals.supabase);
-    const createdProject = await projectService.createProject(parseResult.data, DEFAULT_USER_ID);
+    const createdProject = await projectService.createProject(parseResult.data, locals.user.id);
 
     // Return 201 Created with the created project
     return new Response(JSON.stringify(createdProject), {

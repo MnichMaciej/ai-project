@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 import { AIService } from "../../../../lib/ai.service";
 import { ProjectService } from "../../../../lib/project.service";
 import { generateProjectAISchema } from "../../../../lib/validators/project.validators";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
 import type { GenerateProjectAIResponse } from "../../../../types";
 import { OpenRouterError, ValidationError } from "../../../../lib/openrouter.service";
 
@@ -10,6 +9,14 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   const MAX_QUERIES_PER_PROJECT = 5;
 
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const projectId = params.id;
     if (!projectId) {
       return new Response(JSON.stringify({ error: "Project ID is required" }), {
@@ -45,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     let project;
     try {
       // Fetch all projects and find the specific one
-      const { projects } = await projectService.fetchUserProjects(DEFAULT_USER_ID, {});
+      const { projects } = await projectService.fetchUserProjects(locals.user.id, {});
       project = projects.find((p) => p.id === projectId);
 
       if (!project) {
@@ -188,7 +195,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
           description: aiResponse.description,
           technologies: aiResponse.technologies,
         },
-        DEFAULT_USER_ID
+        locals.user.id
       );
     } catch (error) {
       console.error("Error updating project:", error);

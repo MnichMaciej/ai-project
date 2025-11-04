@@ -1,5 +1,4 @@
 import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID } from "../../../../../db/supabase.client";
 
 /**
  * GET handler for fetching query count for a project
@@ -7,6 +6,14 @@ import { DEFAULT_USER_ID } from "../../../../../db/supabase.client";
  */
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
+    // Check if user is authenticated
+    if (!locals.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const projectId = params.id;
     if (!projectId) {
       return new Response(JSON.stringify({ error: "Project ID is required" }), {
@@ -20,7 +27,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       .from("projects")
       .select("id")
       .eq("id", projectId)
-      .eq("user_id", DEFAULT_USER_ID)
+      .eq("user_id", locals.user.id)
       .single();
 
     if (projectError || !projectData) {
