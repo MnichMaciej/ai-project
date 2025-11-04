@@ -1,3 +1,5 @@
+import type { Session } from "@supabase/supabase-js";
+
 // Project-related DTOs
 
 // Enum used for project status
@@ -82,12 +84,13 @@ export interface LoginResponseDto {
   failedAttempts: number;
 }
 
-// Register response DTO
+// Register response DTO (includes session for automatic login)
 export interface RegisterResponseDto {
   user: {
     id: string;
     email: string;
   };
+  session: Session;
 }
 
 // Error response DTO

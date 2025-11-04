@@ -42,7 +42,7 @@ Moduł autentykacji wprowadza zmiany w warstwie frontendowej, dzieląc odpowiedz
 
 ### Obsługa scenariuszy:
 
-- Rejestracja (US-001): Form submit → walidacja → Supabase signUp → auto-login → redirect /projects.
+- Rejestracja (US-001): Form submit → walidacja → Supabase signUp (z weryfikacją emaila wyłączoną) → natychmiastowe utworzenie rekordu w tabeli `users` → utworzenie sesji server-side przez Supabase → frontend otrzymuje user + session → redirect /projects (frontend tylko przekierowuje, sesja jest już aktywna server-side).
 - Logowanie (US-002): Submit → check blokady (API) → signIn → redirect /projects. Błąd: increment counter (session storage + server).
 - Blokada (US-003): Server-side check w login endpoint (jeśli locked: error response). Licznik reset po sukcesie.
 - Usunięcie (US-004): Dialog confirm (z input potwierdzenia) → Supabase deleteUser → signOut → redirect root. Ostrzeżenie: "Operacja nieodwracalna, usunie wszystkie projekty". Dostępne via /profile z linkiem w Header.
@@ -55,11 +55,11 @@ Backend opiera się na Supabase (PostgreSQL + Auth), z endpointami API w src/pag
 
 - **Modele (src/types.ts i src/db/supabase.ts):**
   - Rozszerzenie `User` type (z Supabase): Dodaj camelCase pola: `failedLoginAttempts: number`, `isLocked: boolean`, `lockedAt: Date | null`. DTOs: `RegisterDto` (email: string, password: string), `LoginDto` (email: string, password: string), `DeleteAccountDto` (confirm: boolean).
-  - Tabela Supabase: Użyj auth.users (wbudowana) + custom tabela `user_profiles` (user_id: uuid, failed_attempts: int default 0, is_locked: bool default false). Triggers: Auto-lock po 5 attempts (edge function lub RLS policy).
+  - Tabela Supabase: Użyj auth.users (wbudowana) + custom tabela `users` (id: uuid references auth.users.id, failed_login_attempts: int default 0, locked: bool default false). Endpoint register tworzy rekord w tabeli `users` natychmiast po signUp(). Triggers: Auto-lock po 5 attempts (edge function lub RLS policy).
 
 - **Endpointy (src/pages/api/auth):**
-  - `POST /api/auth/register`: Przyjmuje RegisterDto. Walidacja Zod. Tworzy user via Supabase auth.signUp, dodaje profil. Zwraca { user: User, session: Session } lub error. Integracja z US-001 (check email uniqueness).
-  - `POST /api/auth/login`: LoginDto. Sprawdza lock (query user_profiles). Jeśli nie locked: auth.signInWithPassword, reset attempts. Zwraca session lub error (US-002/003).
+  - `POST /api/auth/register`: Przyjmuje RegisterDto. Walidacja Zod. Tworzy user via Supabase auth.signUp (z weryfikacją emaila wyłączoną dla MVP). Natychmiast po signUp() tworzy rekord w tabeli `users` (nie `user_profiles`) z domyślnymi wartościami (failed_login_attempts: 0, locked: false). Zwraca { user: User, session: Session } - pełna sesja jest tworzona server-side przez Supabase, co umożliwia automatyczne logowanie. Frontend otrzymuje sesję i tylko przekierowuje do /projects. Obsługa błędów: mapowanie Supabase error "email already exists" na komunikat "Adres e-mail jest już zajęty" (tylko ten błąd jest obsługiwany szczegółowo). Integracja z US-001 (check email uniqueness).
+  - `POST /api/auth/login`: LoginDto. Sprawdza lock (query users table). Jeśli nie locked: auth.signInWithPassword, reset attempts. Zwraca session lub error (US-002/003).
   - `POST /api/auth/logout`: Brak body. Wywołuje auth.signOut server-side (z weryfikacją sesji). Zwraca { success: true } i czyści cookies/sesję. Integracja z przyciskiem w Header.
   - `DELETE /api/auth/account`: Weryfikuje sesję (getSession). Usuwa user via auth.admin.deleteUser, kasuje profile/projekty (cascade delete). US-004. Wymaga confirm w DTO (np. hasło lub token).
   - `GET /api/auth/session`: Zwraca current session (dla middleware i Header).
@@ -67,11 +67,11 @@ Backend opiera się na Supabase (PostgreSQL + Auth), z endpointami API w src/pag
 ### Mechanizm walidacji danych wejściowych:
 
 - Zod schemas w endpointach (np. zodRegisterSchema.parse(req.body)). Guard clauses: Jeśli invalid – early return z HttpError (status 400, message: string).
-- Server-side: Supabase RLS (Row Level Security) dla tabel – tylko owner może czytać/update user_profiles.
+- Server-side: Supabase RLS (Row Level Security) dla tabel – tylko owner może czytać/update users.
 
 ### Obsługa wyjątków:
 
-- Custom module `src/lib/errors.ts`: Klasy jak `AuthError` extends Error (props: code: string, message: string, userMessage: string). Mapping Supabase errors (np. 'Email already exists' → userMessage: "Adres e-mail jest już zajęty").
+- Custom module `src/lib/errors.ts`: Klasy jak `AuthError` extends Error (props: code: string, message: string, userMessage: string). Mapping Supabase errors: tylko "email already exists" → userMessage: "Adres e-mail jest już zajęty". Inne błędy zwracane w postaci ogólnej.
 - W endpointach: try-catch → log error (console lub Supabase logs) → return JsonResponse z { error: userMessage }. Rate limiting dla login (Supabase built-in).
 
 ### Aktualizacja renderowania server-side:
@@ -87,6 +87,7 @@ Supabase Auth jest centralnym elementem, integrującym się z Astro via @supabas
 - **Klient-side (React components):** Użyj Supabase client w `AuthService` (src/lib/auth.service.ts). Metody: signUp({email, password}), signInWithPassword, signOut(), deleteUser (admin client z service role key). Kontrakt: Interface `SupabaseAuth` z returns Promise<AuthResponse>.
 - **Server-side (Astro pages/api):** Supabase server client (createServerClient w src/lib/supabase-server.ts). W middleware: Sprawdź session, ustaw locals.authenticated = !!session?.user. Dla Header: server-side getSession do conditional render.
 - **Sesje i security:** Supabase JWT tokens (auto-refresh via client). Dla US-003: Custom hook w auth.users_metadata lub edge function do lock. Odzyskiwanie hasła: Użyj Supabase resetPasswordForEmail (nowy endpoint /api/auth/reset-password, z email input w LoginForm – rozszerzenie US-002).
+- **Weryfikacja emaila:** Wyłączona dla MVP - użytkownicy są automatycznie aktywowani po rejestracji. Konfiguracja Supabase: email confirmation disabled.
 - **Wylogowywanie:** Globalny przycisk w Header.astro (wywołuje POST /api/auth/logout lub client-side service.signOut()). Po wylogowaniu: redirect do /auth/login lub root.
 - **Bezpieczeństwo:** Hashes w Supabase (built-in). Polityka haseł: Zod walidacja (min length 8, uppercase, number). Dla delete (US-004): Wymagaj confirm password w DTO i dialog z potwierdzeniem w ProfileSettings.
 
