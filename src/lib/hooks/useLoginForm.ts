@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import type { AuthErrorResponseDto, LoginResponseDto } from "../../types.ts";
 
 // Login form validation schema
 export const loginFormSchema = z.object({
@@ -26,6 +27,7 @@ export interface UseLoginFormReturn {
 /**
  * Custom hook for managing login form state and submission
  * Handles form validation, API integration, error handling, and failed login attempts tracking
+ * Synchronizes failedAttempts with server response
  */
 export function useLoginForm(): UseLoginFormReturn {
   const form = useForm<LoginFormData>({
@@ -55,39 +57,38 @@ export function useLoginForm(): UseLoginFormReturn {
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const newFailedAttempts = failedAttempts + 1;
-        setFailedAttempts(newFailedAttempts);
+        // Extract failedAttempts from error response if available
+        const errorData = responseData as AuthErrorResponseDto;
+        const serverFailedAttempts = errorData.failedAttempts ?? failedAttempts + 1;
 
-        let errorMessage = "Nieprawidłowe dane logowania";
+        // Synchronize with server
+        setFailedAttempts(serverFailedAttempts);
 
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+        const errorMessage = errorData.error || "Nieprawidłowe dane logowania";
 
-          // Check if account is locked (US-003)
-          if (errorMessage.includes("zablokowane") || errorMessage.includes("locked")) {
-            toast.error("Konto zablokowane, skontaktuj się z adminem");
-            return;
-          }
-
-          // Map specific errors
-          if (errorData.error?.includes("email") || errorData.error?.includes("e-mail")) {
-            form.setError("email", {
-              type: "server",
-              message: errorMessage,
-            });
-          } else {
-            form.setError("password", {
-              type: "server",
-              message: errorMessage,
-            });
-          }
-        } catch {
-          // If parsing fails, use default error message
+        // Check if account is locked (US-003)
+        if (errorMessage.includes("zablokowane") || errorMessage.includes("locked") || response.status === 403) {
+          toast.error("Konto zablokowane, skontaktuj się z adminem");
+          return;
         }
 
-        if (newFailedAttempts >= 5) {
+        // Map specific errors
+        if (errorData.error?.includes("email") || errorData.error?.includes("e-mail")) {
+          form.setError("email", {
+            type: "server",
+            message: errorMessage,
+          });
+        } else {
+          form.setError("password", {
+            type: "server",
+            message: errorMessage,
+          });
+        }
+
+        if (serverFailedAttempts >= 5) {
           toast.error("Konto zablokowane po 5 nieudanych próbach. Skontaktuj się z adminem.");
         } else {
           toast.error(errorMessage);
@@ -96,8 +97,9 @@ export function useLoginForm(): UseLoginFormReturn {
         return;
       }
 
-      // Success - reset failed attempts, show toast and redirect
-      setFailedAttempts(0);
+      // Success - reset failed attempts and synchronize with server
+      const successData = responseData as LoginResponseDto;
+      setFailedAttempts(successData.failedAttempts ?? 0);
       toast.success("Zalogowano pomyślnie");
       window.location.href = "/projects";
     } catch (error) {

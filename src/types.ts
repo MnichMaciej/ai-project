@@ -59,6 +59,43 @@ export interface DeleteProjectResponse {
   message: string;
 }
 
+// Auth-related DTOs
+
+// Login request DTO
+export interface LoginDto {
+  email: string;
+  password: string;
+}
+
+// Register request DTO
+export interface RegisterDto {
+  email: string;
+  password: string;
+}
+
+// Login response DTO (includes failed attempts count for UI synchronization)
+export interface LoginResponseDto {
+  user: {
+    id: string;
+    email: string;
+  };
+  failedAttempts: number;
+}
+
+// Register response DTO
+export interface RegisterResponseDto {
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
+// Error response DTO
+export interface AuthErrorResponseDto {
+  error: string;
+  failedAttempts?: number;
+}
+
 // Note: User-related DTOs are not fully defined in the API plan endpoints, but for completeness:
 // Basic user response (excludes sensitive fields)
 export interface UserDto {
