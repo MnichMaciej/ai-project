@@ -1,6 +1,19 @@
 ---
 // Header component with navigation
 import { ThemeToggle } from "./ThemeToggle";
+import { createSupabaseServerInstance } from "../db/supabase.client.ts";
+
+// Get user session server-side
+const supabase = createSupabaseServerInstance({
+  cookies: Astro.cookies,
+  headers: Astro.request.headers,
+});
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+const isAuthenticated = !!user;
 ---
 
 <header class="border-b">
@@ -8,10 +21,115 @@ import { ThemeToggle } from "./ThemeToggle";
     <nav class="flex items-center justify-between">
       <a href="/" class="text-xl font-bold hover:text-primary transition-colors"> Portfolio Manager </a>
       <div class="flex items-center gap-4">
-        <a href="/" class="text-sm hover:text-primary transition-colors"> Projekty </a>
-        <a href="/projects/new" class="text-sm hover:text-primary transition-colors"> Dodaj projekt </a>
+        {
+          isAuthenticated ? (
+            <>
+              <a href="/projects" class="text-sm hover:text-primary transition-colors">
+                {" "}
+                Projekty{" "}
+              </a>
+              <a href="/projects/new" class="text-sm hover:text-primary transition-colors">
+                {" "}
+                Dodaj projekt{" "}
+              </a>
+              <div class="relative group">
+                <button
+                  type="button"
+                  class="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  id="user-menu-trigger"
+                >
+                  <span>{user?.email}</span>
+                  <svg
+                    class="w-4 h-4 transition-transform group-hover:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  class="absolute right-0 mt-2 w-48 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+                  id="user-menu-dropdown"
+                >
+                  <div class="py-1">
+                    <button
+                      type="button"
+                      id="logout-btn"
+                      class="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      Wyloguj
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <a href="/auth/login" class="text-sm hover:text-primary transition-colors">
+                {" "}
+                Zaloguj{" "}
+              </a>
+              <a href="/auth/register" class="text-sm hover:text-primary transition-colors">
+                {" "}
+                Zarejestruj{" "}
+              </a>
+            </>
+          )
+        }
         <ThemeToggle client:only="react" />
       </div>
     </nav>
   </div>
 </header>
+
+<script>
+  // Handle logout button click
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        const response = await fetch("/api/auth/logout", {
+          method: "POST",
+        });
+
+        if (response.ok || response.redirected) {
+          window.location.href = "/auth/login";
+        } else {
+          console.error("Logout failed");
+        }
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    });
+  }
+
+  // Keep dropdown open when hovering over it
+  const userMenuTrigger = document.getElementById("user-menu-trigger");
+  const userMenuDropdown = document.getElementById("user-menu-dropdown");
+
+  if (userMenuTrigger && userMenuDropdown) {
+    let timeout = null;
+
+    const showDropdown = () => {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      userMenuDropdown.classList.remove("opacity-0", "invisible");
+      userMenuDropdown.classList.add("opacity-100", "visible");
+    };
+
+    const hideDropdown = () => {
+      timeout = setTimeout(() => {
+        userMenuDropdown.classList.remove("opacity-100", "visible");
+        userMenuDropdown.classList.add("opacity-0", "invisible");
+      }, 100);
+    };
+
+    userMenuTrigger.addEventListener("mouseenter", showDropdown);
+    userMenuTrigger.addEventListener("mouseleave", hideDropdown);
+    userMenuDropdown.addEventListener("mouseenter", showDropdown);
+    userMenuDropdown.addEventListener("mouseleave", hideDropdown);
+  }
+</script>
