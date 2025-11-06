@@ -44,6 +44,13 @@ For detailed requirements, see the [Product Requirements Document (PRD)](.ai/prd
 - ESLint and Prettier for code linting and formatting.
 - Husky and lint-staged for pre-commit hooks.
 
+### Testing
+
+- **Vitest**: Fast unit testing framework with native ESM support and Vite integration.
+- **React Testing Library**: Testing utilities for React components focusing on user-centric testing.
+- **Playwright**: End-to-end testing framework for cross-browser testing (Chromium, Firefox, WebKit).
+- **Codecov**: Code coverage reporting and tracking for test quality metrics.
+
 Full dependencies are listed in [package.json](package.json).
 
 ## Getting Started Locally
