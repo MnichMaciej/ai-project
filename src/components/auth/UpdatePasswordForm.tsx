@@ -142,14 +142,12 @@ export function UpdatePasswordForm() {
         <CardContent className="space-y-6">
           <Alert variant="default">
             <CheckCircle2 className="size-4" />
-            <AlertDescription>
-              Hasło zostało pomyślnie zaktualizowane. Za chwilę zostaniesz przekierowany do strony logowania.
-            </AlertDescription>
+            <AlertDescription>Hasło zostało pomyślnie zaktualizowane.</AlertDescription>
           </Alert>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button variant="outline" className="w-full" onClick={() => (window.location.href = "/auth/login")}>
-            Przejdź do logowania
+          <Button variant="outline" className="w-full" onClick={() => (window.location.href = "/projects")}>
+            Przejdź do strony głównej
           </Button>
         </CardFooter>
       </Card>
