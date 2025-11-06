@@ -99,6 +99,31 @@ export interface AuthErrorResponseDto {
   failedAttempts?: number;
 }
 
+// Reset password request DTO
+export interface ResetPasswordDto {
+  email: string;
+}
+
+// Reset password response DTO
+export interface ResetPasswordResponseDto {
+  success: boolean;
+}
+
+// Update password request DTO (for callback from email link)
+export interface UpdatePasswordDto {
+  password: string;
+  confirmPassword: string;
+}
+
+// Update password response DTO
+export interface UpdatePasswordResponseDto {
+  success: boolean;
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
 // Note: User-related DTOs are not fully defined in the API plan endpoints, but for completeness:
 // Basic user response (excludes sensitive fields)
 export interface UserDto {

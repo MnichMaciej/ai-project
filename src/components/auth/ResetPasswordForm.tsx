@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
             </AlertDescription>
           </Alert>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 mt-4">
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? (
               <>

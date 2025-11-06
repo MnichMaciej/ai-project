@@ -8,10 +8,14 @@ const PUBLIC_PATHS = [
   "/auth/login",
   "/auth/register",
   "/auth/reset-password",
+  "/auth/update-password",
   // Auth API endpoints
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/reset-password",
+  "/api/auth/update-password",
+  "/api/auth/exchange-recovery-token",
+  "/api/auth/check-session",
 ];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
@@ -23,7 +27,8 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
     });
 
     // For auth pages, redirect logged-in users to /projects
-    if (url.pathname.startsWith("/auth/")) {
+    // Exception: /auth/update-password should be accessible even when logged in (for password reset flow)
+    if (url.pathname.startsWith("/auth/") && url.pathname !== "/auth/update-password") {
       const {
         data: { user },
       } = await supabase.auth.getUser();
