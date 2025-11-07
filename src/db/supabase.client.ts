@@ -1,7 +1,10 @@
 import type { AstroCookies } from "astro";
 import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
+import type { SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";
 
 import type { Database } from "./database.types.ts";
+
+export type SupabaseClient = SupabaseClientType<Database>;
 
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",

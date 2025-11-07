@@ -88,7 +88,7 @@ export function ProjectForm({
   };
 
   return (
-    <Card>
+    <Card data-testid="project-form">
       <CardHeader>
         <CardTitle>Szczegóły projektu</CardTitle>
         <CardDescription>
@@ -103,6 +103,7 @@ export function ProjectForm({
               Nazwa projektu <span className="text-destructive">*</span>
             </Label>
             <Input
+              data-testid="project-name-input"
               id="name"
               type="text"
               {...register("name")}
@@ -130,6 +131,7 @@ export function ProjectForm({
               Opis <span className="text-destructive">*</span>
             </Label>
             <Textarea
+              data-testid="project-description-textarea"
               id="description"
               {...register("description")}
               aria-invalid={errors.description ? "true" : "false"}
@@ -187,6 +189,7 @@ export function ProjectForm({
             </div>
             <div className="flex gap-2">
               <Input
+                data-testid="new-technology-input"
                 id="technologies"
                 type="text"
                 value={newTechnology}
@@ -197,6 +200,7 @@ export function ProjectForm({
                 disabled={(watchedTechnologies?.length ?? 0) >= 10}
               />
               <Button
+                data-testid="add-technology-button"
                 type="button"
                 variant="outline"
                 size="icon"
@@ -259,7 +263,11 @@ export function ProjectForm({
               control={control}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="status" aria-invalid={errors.status ? "true" : "false"}>
+                  <SelectTrigger 
+                    data-testid="project-status-select"
+                    id="status" 
+                    aria-invalid={errors.status ? "true" : "false"}
+                  >
                     <SelectValue placeholder="Wybierz status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,6 +291,7 @@ export function ProjectForm({
           <div className="space-y-2">
             <Label htmlFor="repoUrl">URL repozytorium</Label>
             <Input
+              data-testid="project-repo-url-input"
               id="repoUrl"
               type="url"
               {...register("repoUrl", {
@@ -307,6 +316,7 @@ export function ProjectForm({
           <div className="space-y-2">
             <Label htmlFor="demoUrl">URL dema</Label>
             <Input
+              data-testid="project-demo-url-input"
               id="demoUrl"
               type="url"
               {...register("demoUrl", {
@@ -336,6 +346,7 @@ export function ProjectForm({
           <div className="space-y-2">
             <Label htmlFor="previewUrl">URL podglądu (obraz)</Label>
             <Input
+              data-testid="project-preview-url-input"
               id="previewUrl"
               type="url"
               {...register("previewUrl", {
@@ -363,6 +374,7 @@ export function ProjectForm({
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
           <Button
+            data-testid="cancel-project-button"
             type="button"
             variant="outline"
             onClick={onCancel}
@@ -371,7 +383,12 @@ export function ProjectForm({
           >
             Anuluj
           </Button>
-          <Button type="submit" disabled={isSubmitting || !isValid} className="w-full sm:w-auto">
+          <Button 
+            data-testid="submit-project-button"
+            type="submit" 
+            disabled={isSubmitting || !isValid} 
+            className="w-full sm:w-auto"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="size-4 mr-2 animate-spin" />

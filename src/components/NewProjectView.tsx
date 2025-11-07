@@ -15,9 +15,13 @@ export function NewProjectView() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl animate-in fade-in duration-300">
+    <div
+      data-testid="new-project-container"
+      className="container mx-auto px-4 py-8 max-w-4xl animate-in fade-in duration-300"
+    >
       <div className="mb-6">
         <Button
+          data-testid="back-to-projects-button"
           variant="ghost"
           size="sm"
           onClick={handleCancel}
@@ -27,7 +31,9 @@ export function NewProjectView() {
           <ArrowLeft className="size-4 mr-2" />
           Powrót
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Dodaj nowy projekt</h1>
+        <h1 data-testid="new-project-title" className="text-3xl font-bold tracking-tight">
+          Dodaj nowy projekt
+        </h1>
         <p className="text-muted-foreground mt-2">Wypełnij formularz, aby dodać nowy projekt do portfolio</p>
       </div>
 

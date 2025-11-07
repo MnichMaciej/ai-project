@@ -20,6 +20,8 @@ interface ImportMetaEnv {
   readonly SUPABASE_KEY: string;
   readonly OPENROUTER_API_KEY: string;
   // more env variables...
+  readonly SMOKE_USER_LOGIN: string;
+  readonly SMOKE_USER_PASSWORD: string;
 }
 
 interface ImportMeta {
