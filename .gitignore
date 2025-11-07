@@ -31,3 +31,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 *.spec.ts.snap
+
+# Playwright auth state
+tests/e2e/.auth/
