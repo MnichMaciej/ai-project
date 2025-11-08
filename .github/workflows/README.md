@@ -50,18 +50,38 @@ This directory contains the GitHub Actions workflows for the **Portfol.io** proj
 
 - **Timeout**: 20 minutes
 - **Depends on**: Build Production
+- **Environment**: `integration` (requires secrets configuration)
 - **Node Environment**: `test`
+- **Secrets**: Uses environment secrets:
+  - `SUPABASE_URL` - Supabase project URL
+  - `SUPABASE_KEY` - Supabase API key
+  - `OPENROUTER_API_KEY` - OpenRouter API key
+  - `SMOKE_USER_LOGIN` - Test user credentials
+  - `SMOKE_USER_PASSWORD` - Test user credentials
 - **Steps**:
   - Downloads build artifacts
   - Installs Playwright browsers
-  - Runs end-to-end tests
+  - Runs end-to-end tests with environment variables
   - Uploads Playwright report for 14 days
 
 #### 5. **Summary** 📊
 
 - **Timeout**: 5 minutes
-- **Depends on**: All jobs
+- **Depends on**: All jobs (setup, build, test-unit, test-e2e)
 - **Purpose**: Final status check and summary
+
+#### 6. **Post PR Comment** 💬
+
+- **Timeout**: 5 minutes
+- **Depends on**: All jobs including summary
+- **Runs only on**: Pull Request events
+- **Permissions**: `pull-requests: write`
+- **Purpose**: Posts a formatted status comment on PR with results
+- **Features**:
+  - Shows status emojis for each job (✅ success, ❌ failure, ⊘ skipped)
+  - Lists all job statuses in summary format
+  - Provides direct link to workflow run
+  - Automatically posts on PR without manual intervention
 
 ### Environment Variables
 
@@ -72,6 +92,25 @@ NODE_ENV: test      # For setup and test jobs
 NODE_ENV: production # For build job
 ```
 
+### Environment Configuration for Integration Tests
+
+The **E2E Tests** job requires an `integration` environment to be configured in GitHub repository settings. This environment should have the following secrets configured:
+
+**Required Secrets:**
+
+- `SUPABASE_URL` - Supabase project URL (e.g., `https://xxxxx.supabase.co`)
+- `SUPABASE_KEY` - Supabase anonymous/public key (e.g., `eyJhbGc...`)
+- `OPENROUTER_API_KEY` - OpenRouter API key (e.g., `sk-or-xxxxx`)
+- `SMOKE_USER_LOGIN` - Test user email for smoke tests (e.g., `test@example.com`)
+- `SMOKE_USER_PASSWORD` - Test user password (e.g., secure password)
+
+**To set up the integration environment:**
+
+1. Go to Repository Settings → Environments
+2. Create new environment named `integration`
+3. Add the above secrets to the environment
+4. Optionally set deployment branches if you want to restrict access
+
 ### Key Features
 
 ✅ **Concurrency Control**: Only one run per branch is active, others are cancelled  
@@ -79,7 +118,9 @@ NODE_ENV: production # For build job
 ✅ **Code Coverage**: Integrated with Codecov for coverage tracking  
 ✅ **Fast Feedback**: Parallel job execution where possible  
 ✅ **Timeouts**: Each job has appropriate timeout to catch hanging processes  
-✅ **Modern Actions**: Using latest major versions of GitHub Actions
+✅ **Modern Actions**: Using latest major versions of GitHub Actions  
+✅ **PR Integration**: Automatic status comments on pull requests  
+✅ **Environment Secrets**: Secure credential management for integration tests
 
 ### Job Dependencies
 
@@ -87,9 +128,11 @@ NODE_ENV: production # For build job
 Setup & Validate
 ├── Build Production
 │   └── E2E Tests
-│       └── Summary
+│       ├── Summary
+│       └── Post PR Comment (only on PRs)
 └── Unit Tests
     └── Summary
+        └── Post PR Comment (only on PRs)
 ```
 
 ## 📦 Composite Actions
@@ -146,6 +189,7 @@ E2E tests require:
 - Installed Playwright browsers
 - Runs with full browser support (Chromium, Firefox, WebKit)
 - Reports saved for debugging
+- Access to integration environment secrets
 
 ## 📝 Scripts Used
 
@@ -182,6 +226,13 @@ npm run test:e2e              # E2E tests with Playwright
 - Playwright browsers might need reinstall
 - Check if build artifacts were created
 - Verify test data/environment is ready
+- Ensure integration environment secrets are configured
+
+### E2E Tests Skip PR Comment
+
+- Ensure the job runs only on Pull Request events
+- Check repository permissions for `pull-requests: write`
+- Verify the PR workflow trigger is configured
 
 ### Coverage Upload Fails
 
@@ -194,3 +245,4 @@ npm run test:e2e              # E2E tests with Playwright
 - [Vitest Testing](https://vitest.dev/)
 - [Playwright E2E Testing](https://playwright.dev/)
 - [Codecov Integration](https://codecov.io/)
+- [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)

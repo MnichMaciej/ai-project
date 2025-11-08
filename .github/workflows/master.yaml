@@ -107,8 +107,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: build
+    environment: integration
     env:
       NODE_ENV: test
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      SMOKE_USER_LOGIN: ${{ secrets.SMOKE_USER_LOGIN }}
+      SMOKE_USER_PASSWORD: ${{ secrets.SMOKE_USER_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -152,12 +158,86 @@ jobs:
 
     steps:
       - name: Check job status
+        id: job-status
         run: |
           if [ "${{ needs.setup.result }}" == "failure" ] || \
              [ "${{ needs.build.result }}" == "failure" ] || \
              [ "${{ needs.test-unit.result }}" == "failure" ] || \
              [ "${{ needs.test-e2e.result }}" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
             echo "❌ CI/CD Pipeline failed"
             exit 1
           fi
+          echo "status=success" >> $GITHUB_OUTPUT
           echo "✅ CI/CD Pipeline passed successfully"
+
+  pr-comment:
+    name: Post PR Comment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [setup, build, test-unit, test-e2e, summary]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Determine pipeline status
+        id: status
+        run: |
+          SETUP_STATUS="${{ needs.setup.result }}"
+          BUILD_STATUS="${{ needs.build.result }}"
+          UNIT_STATUS="${{ needs.test-unit.result }}"
+          E2E_STATUS="${{ needs.test-e2e.result }}"
+          SUMMARY_STATUS="${{ needs.summary.result }}"
+
+          echo "setup=$SETUP_STATUS" >> $GITHUB_OUTPUT
+          echo "build=$BUILD_STATUS" >> $GITHUB_OUTPUT
+          echo "unit=$UNIT_STATUS" >> $GITHUB_OUTPUT
+          echo "e2e=$E2E_STATUS" >> $GITHUB_OUTPUT
+
+          if [ "$SUMMARY_STATUS" == "success" ]; then
+            echo "status=✅" >> $GITHUB_OUTPUT
+            echo "message=All checks passed successfully!" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌" >> $GITHUB_OUTPUT
+            echo "message=Some checks failed. Please review the logs." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const statusEmoji = "${{ steps.status.outputs.status }}";
+            const message = "${{ steps.status.outputs.message }}";
+            const setupStatus = "${{ steps.status.outputs.setup }}";
+            const buildStatus = "${{ steps.status.outputs.build }}";
+            const unitStatus = "${{ steps.status.outputs.unit }}";
+            const e2eStatus = "${{ steps.status.outputs.e2e }}";
+
+            const statusIcon = (status) => {
+              switch(status) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'skipped': return '⊘';
+                default: return '◯';
+              }
+            };
+
+            const body = `${statusEmoji} **CI/CD Pipeline Result**
+
+**Job Status Summary:**
+- Setup & Validate: ${statusIcon(setupStatus)} ${setupStatus}
+- Build Production: ${statusIcon(buildStatus)} ${buildStatus}
+- Unit Tests: ${statusIcon(unitStatus)} ${unitStatus}
+- E2E Tests: ${statusIcon(e2eStatus)} ${e2eStatus}
+
+${message}
+
+[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
