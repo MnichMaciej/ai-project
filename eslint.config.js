@@ -20,6 +20,11 @@ const baseConfig = tseslint.config({
   rules: {
     "no-console": "off",
     "no-unused-vars": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-useless-constructor": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-empty-object-type": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
   },
 });
 
@@ -61,6 +66,9 @@ export default tseslint.config(
   baseConfig,
   jsxA11yConfig,
   reactConfig,
-  eslintPluginAstro.configs["flat/recommended"],
-  eslintPluginPrettier
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    extends: [eslintPluginPrettier],
+  },
+  eslintPluginAstro.configs["flat/recommended"]
 );

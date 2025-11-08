@@ -263,9 +263,9 @@ export function ProjectForm({
               control={control}
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger 
+                  <SelectTrigger
                     data-testid="project-status-select"
-                    id="status" 
+                    id="status"
                     aria-invalid={errors.status ? "true" : "false"}
                   >
                     <SelectValue placeholder="Wybierz status" />
@@ -383,10 +383,10 @@ export function ProjectForm({
           >
             Anuluj
           </Button>
-          <Button 
+          <Button
             data-testid="submit-project-button"
-            type="submit" 
-            disabled={isSubmitting || !isValid} 
+            type="submit"
+            disabled={isSubmitting || !isValid}
             className="w-full sm:w-auto"
           >
             {isSubmitting ? (

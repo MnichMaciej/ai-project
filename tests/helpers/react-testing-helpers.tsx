@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import type { ReactElement } from 'react';
+import { render } from "@testing-library/react";
+import type { ReactElement } from "react";
 
 /**
  * Custom render function that includes providers
@@ -11,6 +11,5 @@ export function renderWithProviders(ui: ReactElement, options = {}) {
   });
 }
 
-export * from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';
-
+export * from "@testing-library/react";
+export { default as userEvent } from "@testing-library/user-event";

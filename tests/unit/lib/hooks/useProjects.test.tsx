@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useProjects } from '@/lib/hooks/useProjects';
-import { ProjectStatus } from '@/types';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { ProjectStatus } from "@/types";
 
 // Mock window.location
 const mockLocation = {
-  href: '',
-  origin: 'http://localhost:3000',
+  href: "",
+  origin: "http://localhost:3000",
 };
-Object.defineProperty(window, 'location', {
+Object.defineProperty(window, "location", {
   value: mockLocation,
   writable: true,
 });
@@ -16,32 +16,32 @@ Object.defineProperty(window, 'location', {
 // Mock fetch
 global.fetch = vi.fn();
 
-describe('useProjects', () => {
+describe("useProjects", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLocation.href = '';
+    mockLocation.href = "";
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('useProjects_should_fetch_projects_with_pagination', () => {
-    it('should fetch projects on mount', async () => {
+  describe("useProjects_should_fetch_projects_with_pagination", () => {
+    it("should fetch projects on mount", async () => {
       // Arrange
       const mockProjects = {
         projects: [
           {
-            id: '1',
-            name: 'Project 1',
-            description: 'Description 1',
-            technologies: ['React'],
+            id: "1",
+            name: "Project 1",
+            description: "Description 1",
+            technologies: ["React"],
             status: ProjectStatus.PLANNING,
             repoUrl: null,
             demoUrl: null,
             previewUrl: null,
-            createdAt: '2024-01-01',
-            updatedAt: '2024-01-01',
+            createdAt: "2024-01-01",
+            updatedAt: "2024-01-01",
           },
         ],
         total: 1,
@@ -62,23 +62,20 @@ describe('useProjects', () => {
         expect(result.current.total).toBe(1);
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/projects'),
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining("/api/projects"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       // Check that the URL contains the expected parameters (accounting for URL encoding)
       const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      expect(fetchCall).toContain('limit=50');
-      expect(fetchCall).toContain('offset=0');
+      expect(fetchCall).toContain("limit=50");
+      expect(fetchCall).toContain("offset=0");
       expect(fetchCall).toMatch(/sort=status(?:%3A|:)/);
     });
 
-    it('should handle empty projects list', async () => {
+    it("should handle empty projects list", async () => {
       // Arrange
       const mockProjects = {
         projects: [],
@@ -102,8 +99,8 @@ describe('useProjects', () => {
     });
   });
 
-  describe('useProjects_should_handle_loading_and_error_states', () => {
-    it('should set loading state initially', () => {
+  describe("useProjects_should_handle_loading_and_error_states", () => {
+    it("should set loading state initially", () => {
       // Arrange
       global.fetch = vi.fn().mockImplementation(
         () =>
@@ -120,7 +117,7 @@ describe('useProjects', () => {
       expect(result.current.projects).toEqual([]);
     });
 
-    it('should handle API errors', async () => {
+    it("should handle API errors", async () => {
       // Arrange
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -133,11 +130,11 @@ describe('useProjects', () => {
       // Assert
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
-        expect(result.current.error).toBe('Błąd serwera, spróbuj ponownie');
+        expect(result.current.error).toBe("Błąd serwera, spróbuj ponownie");
       });
     });
 
-    it('should redirect to login on 401 error', async () => {
+    it("should redirect to login on 401 error", async () => {
       // Arrange
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -149,13 +146,13 @@ describe('useProjects', () => {
 
       // Assert
       await waitFor(() => {
-        expect(mockLocation.href).toBe('/login');
+        expect(mockLocation.href).toBe("/login");
       });
     });
 
-    it('should handle network errors', async () => {
+    it("should handle network errors", async () => {
       // Arrange
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
       // Act
       const { result } = renderHook(() => useProjects());
@@ -163,11 +160,11 @@ describe('useProjects', () => {
       // Assert
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
-        expect(result.current.error).toBe('Network error');
+        expect(result.current.error).toBe("Network error");
       });
     });
 
-    it('should refetch projects on demand', async () => {
+    it("should refetch projects on demand", async () => {
       // Arrange
       const mockProjects = {
         projects: [],
@@ -197,4 +194,3 @@ describe('useProjects', () => {
     });
   });
 });
-

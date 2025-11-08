@@ -1,22 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   createProjectSchema,
   updateProjectSchema,
   generateProjectAISchema,
   projectsQuerySchema,
-} from '@/lib/validators/project.validators';
-import { ProjectStatus } from '@/types';
+} from "@/lib/validators/project.validators";
+import { ProjectStatus } from "@/types";
 
-describe('projectValidators', () => {
-  describe('projectValidators_should_validate_create_project_schema', () => {
-    it('should validate valid project data', () => {
+describe("projectValidators", () => {
+  describe("projectValidators_should_validate_create_project_schema", () => {
+    it("should validate valid project data", () => {
       // Arrange
       const validData = {
-        name: 'My Project',
-        description: 'Project description',
-        technologies: ['React', 'TypeScript'],
+        name: "My Project",
+        description: "Project description",
+        technologies: ["React", "TypeScript"],
         status: ProjectStatus.PLANNING,
-        repoUrl: 'https://github.com/user/repo',
+        repoUrl: "https://github.com/user/repo",
         demoUrl: null,
         previewUrl: null,
       };
@@ -27,17 +27,17 @@ describe('projectValidators', () => {
       // Assert
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.name).toBe('My Project');
-        expect(result.data.technologies).toEqual(['React', 'TypeScript']);
+        expect(result.data.name).toBe("My Project");
+        expect(result.data.technologies).toEqual(["React", "TypeScript"]);
       }
     });
 
-    it('should reject empty name', () => {
+    it("should reject empty name", () => {
       // Arrange
       const invalidData = {
-        name: '',
-        description: 'Description',
-        technologies: ['React'],
+        name: "",
+        description: "Description",
+        technologies: ["React"],
         status: ProjectStatus.PLANNING,
         repoUrl: null,
         demoUrl: null,
@@ -51,12 +51,12 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject name exceeding 255 characters', () => {
+    it("should reject name exceeding 255 characters", () => {
       // Arrange
       const invalidData = {
-        name: 'x'.repeat(256),
-        description: 'Description',
-        technologies: ['React'],
+        name: "x".repeat(256),
+        description: "Description",
+        technologies: ["React"],
         status: ProjectStatus.PLANNING,
         repoUrl: null,
         demoUrl: null,
@@ -70,11 +70,11 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject empty technologies array', () => {
+    it("should reject empty technologies array", () => {
       // Arrange
       const invalidData = {
-        name: 'Project',
-        description: 'Description',
+        name: "Project",
+        description: "Description",
         technologies: [],
         status: ProjectStatus.PLANNING,
         repoUrl: null,
@@ -89,13 +89,13 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid status enum', () => {
+    it("should reject invalid status enum", () => {
       // Arrange
       const invalidData = {
-        name: 'Project',
-        description: 'Description',
-        technologies: ['React'],
-        status: 'INVALID_STATUS',
+        name: "Project",
+        description: "Description",
+        technologies: ["React"],
+        status: "INVALID_STATUS",
         repoUrl: null,
         demoUrl: null,
         previewUrl: null,
@@ -108,14 +108,14 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid URL format', () => {
+    it("should reject invalid URL format", () => {
       // Arrange
       const invalidData = {
-        name: 'Project',
-        description: 'Description',
-        technologies: ['React'],
+        name: "Project",
+        description: "Description",
+        technologies: ["React"],
         status: ProjectStatus.PLANNING,
-        repoUrl: 'not-a-url',
+        repoUrl: "not-a-url",
         demoUrl: null,
         previewUrl: null,
       };
@@ -128,13 +128,13 @@ describe('projectValidators', () => {
     });
   });
 
-  describe('projectValidators_should_validate_ai_generation_request', () => {
-    it('should validate valid file links', () => {
+  describe("projectValidators_should_validate_ai_generation_request", () => {
+    it("should validate valid file links", () => {
       // Arrange
       const validData = {
         fileLinks: [
-          'https://raw.githubusercontent.com/user/repo/main/file1.ts',
-          'https://raw.githubusercontent.com/user/repo/main/file2.ts',
+          "https://raw.githubusercontent.com/user/repo/main/file1.ts",
+          "https://raw.githubusercontent.com/user/repo/main/file2.ts",
         ],
       };
 
@@ -145,7 +145,7 @@ describe('projectValidators', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject empty file links array', () => {
+    it("should reject empty file links array", () => {
       // Arrange
       const invalidData = {
         fileLinks: [],
@@ -158,10 +158,10 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject more than 8 file links', () => {
+    it("should reject more than 8 file links", () => {
       // Arrange
       const invalidData = {
-        fileLinks: Array(9).fill('https://raw.githubusercontent.com/user/repo/main/file.ts'),
+        fileLinks: Array(9).fill("https://raw.githubusercontent.com/user/repo/main/file.ts"),
       };
 
       // Act
@@ -171,10 +171,10 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid URL format', () => {
+    it("should reject invalid URL format", () => {
       // Arrange
       const invalidData = {
-        fileLinks: ['not-a-url'],
+        fileLinks: ["not-a-url"],
       };
 
       // Act
@@ -184,10 +184,10 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should accept exactly 8 file links', () => {
+    it("should accept exactly 8 file links", () => {
       // Arrange
       const validData = {
-        fileLinks: Array(8).fill('https://raw.githubusercontent.com/user/repo/main/file.ts'),
+        fileLinks: Array(8).fill("https://raw.githubusercontent.com/user/repo/main/file.ts"),
       };
 
       // Act
@@ -198,11 +198,11 @@ describe('projectValidators', () => {
     });
   });
 
-  describe('projectValidators_should_validate_update_project_partial_data', () => {
-    it('should validate partial update with at least one field', () => {
+  describe("projectValidators_should_validate_update_project_partial_data", () => {
+    it("should validate partial update with at least one field", () => {
       // Arrange
       const validData = {
-        name: 'Updated Name',
+        name: "Updated Name",
       };
 
       // Act
@@ -212,7 +212,7 @@ describe('projectValidators', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject empty update object', () => {
+    it("should reject empty update object", () => {
       // Arrange
       const invalidData = {};
 
@@ -223,11 +223,11 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should validate multiple fields in partial update', () => {
+    it("should validate multiple fields in partial update", () => {
       // Arrange
       const validData = {
-        name: 'Updated Name',
-        description: 'Updated Description',
+        name: "Updated Name",
+        description: "Updated Description",
         status: ProjectStatus.IN_PROGRESS,
       };
 
@@ -238,10 +238,10 @@ describe('projectValidators', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should validate all fields optional in update', () => {
+    it("should validate all fields optional in update", () => {
       // Arrange
       const validData = {
-        technologies: ['React', 'Vue'],
+        technologies: ["React", "Vue"],
       };
 
       // Act
@@ -252,8 +252,8 @@ describe('projectValidators', () => {
     });
   });
 
-  describe('projectsQuerySchema validation', () => {
-    it('should validate query parameters with defaults', () => {
+  describe("projectsQuerySchema validation", () => {
+    it("should validate query parameters with defaults", () => {
       // Arrange
       const validData = {};
 
@@ -268,12 +268,12 @@ describe('projectValidators', () => {
       }
     });
 
-    it('should validate custom limit and offset', () => {
+    it("should validate custom limit and offset", () => {
       // Arrange
       const validData = {
         limit: 10,
         offset: 20,
-        sort: 'status:asc' as const,
+        sort: "status:asc" as const,
       };
 
       // Act
@@ -284,11 +284,11 @@ describe('projectValidators', () => {
       if (result.success) {
         expect(result.data.limit).toBe(10);
         expect(result.data.offset).toBe(20);
-        expect(result.data.sort).toBe('status:asc');
+        expect(result.data.sort).toBe("status:asc");
       }
     });
 
-    it('should reject limit exceeding maximum', () => {
+    it("should reject limit exceeding maximum", () => {
       // Arrange
       const invalidData = {
         limit: 101,
@@ -301,7 +301,7 @@ describe('projectValidators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject negative offset', () => {
+    it("should reject negative offset", () => {
       // Arrange
       const invalidData = {
         offset: -1,
@@ -315,4 +315,3 @@ describe('projectValidators', () => {
     });
   });
 });
-

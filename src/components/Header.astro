@@ -84,52 +84,11 @@ const isAuthenticated = !!user;
 </header>
 
 <script>
-  // Handle logout button click
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        const response = await fetch("/api/auth/logout", {
-          method: "POST",
-        });
+  import { initializeHeaderInteractions } from "../lib/header.utils";
 
-        if (response.ok || response.redirected) {
-          window.location.href = "/auth/login";
-        } else {
-          console.error("Logout failed");
-        }
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
-    });
-  }
-
-  // Keep dropdown open when hovering over it
-  const userMenuTrigger = document.getElementById("user-menu-trigger");
-  const userMenuDropdown = document.getElementById("user-menu-dropdown");
-
-  if (userMenuTrigger && userMenuDropdown) {
-    let timeout = null;
-
-    const showDropdown = () => {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      userMenuDropdown.classList.remove("opacity-0", "invisible");
-      userMenuDropdown.classList.add("opacity-100", "visible");
-    };
-
-    const hideDropdown = () => {
-      timeout = setTimeout(() => {
-        userMenuDropdown.classList.remove("opacity-100", "visible");
-        userMenuDropdown.classList.add("opacity-0", "invisible");
-      }, 100);
-    };
-
-    userMenuTrigger.addEventListener("mouseenter", showDropdown);
-    userMenuTrigger.addEventListener("mouseleave", hideDropdown);
-    userMenuDropdown.addEventListener("mouseenter", showDropdown);
-    userMenuDropdown.addEventListener("mouseleave", hideDropdown);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeHeaderInteractions);
+  } else {
+    initializeHeaderInteractions();
   }
 </script>

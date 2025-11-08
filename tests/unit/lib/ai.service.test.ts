@@ -30,11 +30,6 @@ vi.mock("@/lib/openrouter.service", () => {
   // Create a mock class that can be instantiated with 'new'
   class MockOpenRouterService {
     generateResponse = mockOpenRouterInstance.generateResponse;
-
-    constructor(_apiKey: string) {
-      // Constructor accepts apiKey but doesn't need to do anything
-      // All instances share the same mock methods
-    }
   }
 
   return {

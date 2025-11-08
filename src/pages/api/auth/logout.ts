@@ -13,26 +13,19 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Redirect to login page after successful logout
     return redirect("/auth/login");
   } catch (error) {
     console.error("Logout error:", error);
-    return new Response(
-      JSON.stringify({ error: "Wystąpił błąd podczas wylogowywania" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Wystąpił błąd podczas wylogowywania" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
-
