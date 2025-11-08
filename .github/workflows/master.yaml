@@ -205,14 +205,21 @@ jobs:
 
       - name: Post comment on PR
         uses: actions/github-script@v7
+        env:
+          STATUS: ${{ steps.status.outputs.status }}
+          MESSAGE: ${{ steps.status.outputs.message }}
+          SETUP_STATUS: ${{ steps.status.outputs.setup }}
+          BUILD_STATUS: ${{ steps.status.outputs.build }}
+          UNIT_STATUS: ${{ steps.status.outputs.unit }}
+          E2E_STATUS: ${{ steps.status.outputs.e2e }}
         with:
           script: |
-            const statusEmoji = "${{ steps.status.outputs.status }}";
-            const message = "${{ steps.status.outputs.message }}";
-            const setupStatus = "${{ steps.status.outputs.setup }}";
-            const buildStatus = "${{ steps.status.outputs.build }}";
-            const unitStatus = "${{ steps.status.outputs.unit }}";
-            const e2eStatus = "${{ steps.status.outputs.e2e }}";
+            const statusEmoji = process.env.STATUS;
+            const message = process.env.MESSAGE;
+            const setupStatus = process.env.SETUP_STATUS;
+            const buildStatus = process.env.BUILD_STATUS;
+            const unitStatus = process.env.UNIT_STATUS;
+            const e2eStatus = process.env.E2E_STATUS;
 
             const statusIcon = (status) => {
               switch(status) {
@@ -223,17 +230,19 @@ jobs:
               }
             };
 
-            const body = `${statusEmoji} **CI/CD Pipeline Result**
-
-**Job Status Summary:**
-- Setup & Validate: ${statusIcon(setupStatus)} ${setupStatus}
-- Build Production: ${statusIcon(buildStatus)} ${buildStatus}
-- Unit Tests: ${statusIcon(unitStatus)} ${unitStatus}
-- E2E Tests: ${statusIcon(e2eStatus)} ${e2eStatus}
-
-${message}
-
-[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            const body = [
+              `${statusEmoji} __CI/CD Pipeline Result__`,
+              '',
+              '__Job Status Summary__',
+              `• Setup & Validate: ${statusIcon(setupStatus)} ${setupStatus}`,
+              `• Build Production: ${statusIcon(buildStatus)} ${buildStatus}`,
+              `• Unit Tests: ${statusIcon(unitStatus)} ${unitStatus}`,
+              `• E2E Tests: ${statusIcon(e2eStatus)} ${e2eStatus}`,
+              '',
+              message,
+              '',
+              `[View workflow run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            ].join('\n');
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
