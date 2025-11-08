@@ -6,13 +6,14 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 
 interface ProjectEditViewProps {
   projectId: string;
+  isAIEnabled?: boolean;
 }
 
 /**
  * ProjectEditView - Main container component for editing an existing project
  * Manages form state, API integration, and rendering ProjectForm
  */
-export function ProjectEditView({ projectId }: ProjectEditViewProps) {
+export function ProjectEditView({ projectId, isAIEnabled = false }: ProjectEditViewProps) {
   const { form, isSubmitting, isLoading, onSubmit, error, queryCount } = useProjectEditForm(projectId);
 
   const handleCancel = () => {
@@ -80,6 +81,7 @@ export function ProjectEditView({ projectId }: ProjectEditViewProps) {
         mode="edit"
         projectId={projectId}
         initialQueryCount={queryCount}
+        isAIEnabled={isAIEnabled}
       />
     </div>
   );

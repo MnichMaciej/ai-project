@@ -1,8 +1,20 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
 import { ProjectEditView } from "../../../components/ProjectEditView";
+import { checkFeatureFlagDirectly, FeatureFlags } from "@/features";
+import { createSupabaseServerInstance } from "@/db/supabase.client";
+
+// Sprawdź flagę w Astro (server-side) i przekaż do komponentu React
+// Użyj locals.supabase jeśli dostępne, w przeciwnym razie utwórz nową instancję
+const supabase =
+  Astro.locals.supabase ||
+  createSupabaseServerInstance({
+    cookies: Astro.cookies,
+    headers: Astro.request.headers,
+  });
+const isAIEnabled = await checkFeatureFlagDirectly(supabase, FeatureFlags.AI_GENERATION);
 ---
 
 <Layout title="Edytuj projekt - Portfolio Manager">
-  <ProjectEditView client:load projectId={Astro.params.id || ""} />
+  <ProjectEditView client:load projectId={Astro.params.id || ""} isAIEnabled={isAIEnabled} />
 </Layout>

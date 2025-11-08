@@ -26,6 +26,7 @@ interface ProjectFormProps {
   mode?: "create" | "edit";
   projectId?: string | null;
   initialQueryCount?: number;
+  isAIEnabled?: boolean;
 }
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -47,6 +48,7 @@ export function ProjectForm({
   mode = "create",
   projectId = null,
   initialQueryCount = 0,
+  isAIEnabled = false,
 }: ProjectFormProps) {
   const {
     register,
@@ -240,7 +242,7 @@ export function ProjectForm({
           </div>
 
           {/* AI Section - Only show in edit mode or when projectId is available */}
-          {mode === "edit" && projectId && (
+          {mode === "edit" && projectId && isAIEnabled && (
             <AISection
               projectId={projectId}
               queryCount={aiGeneration.state.queryCount}

@@ -4,9 +4,19 @@ import { ProjectService } from "../../../../lib/project.service";
 import { generateProjectAISchema } from "../../../../lib/validators/project.validators";
 import type { GenerateProjectAIResponse } from "../../../../types";
 import { OpenRouterError, ValidationError } from "../../../../lib/openrouter.service";
+import { checkFeatureFlagDirectly, FeatureFlags } from "@/features";
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
   const MAX_QUERIES_PER_PROJECT = 5;
+
+  // Sprawdź flagę bezpośrednio z bazy (za każdym razem) - API zawsze sprawdza aktualną wartość
+  const isAIEnabled = await checkFeatureFlagDirectly(locals.supabase, FeatureFlags.AI_GENERATION);
+  if (!isAIEnabled) {
+    return new Response(JSON.stringify({ error: "AI generation not available" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   try {
     // Check if user is authenticated
