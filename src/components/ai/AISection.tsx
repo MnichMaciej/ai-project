@@ -25,7 +25,6 @@ interface AISectionProps {
  */
 export function AISection({
   projectId,
-  queryCount,
   aiState,
   onOpenInput,
   onCloseInput,
@@ -59,23 +58,30 @@ export function AISection({
   }
 
   return (
-    <Card className="border-dashed">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <Card className="border-dashed py-3 md:py-6 gap-3 md:gap-6">
+      <CardHeader className="px-3 md:px-6">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle>Generowanie danych za pomocą AI</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-base md:text-lg">Generowanie danych za pomocą AI</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
               Automatycznie wygeneruj opis i technologie na podstawie analizy kodu z GitHub
             </CardDescription>
           </div>
           {aiState.isOpen && (
-            <Button type="button" variant="ghost" size="icon" onClick={onCloseInput} aria-label="Zamknij sekcję AI">
-              <X className="size-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onCloseInput}
+              aria-label="Zamknij sekcję AI"
+              className="size-8 md:size-10"
+            >
+              <X className="size-3 md:size-4" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4 px-3 md:px-6">
         {!aiState.isOpen ? (
           <>
             <AIGenerateButton
@@ -96,7 +102,7 @@ export function AISection({
             />
             <AIProgressIndicator status={aiState.status} message={aiState.error || undefined} />
             {aiState.status === "success" && (
-              <div className="pt-2">
+              <div className="pt-1 md:pt-2">
                 <AILimitInfo queryCount={aiState.queryCount} />
               </div>
             )}

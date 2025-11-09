@@ -118,16 +118,16 @@ export function ProjectForm({
   } = form;
 
   return (
-    <Card data-testid="project-form">
-      <CardHeader>
-        <CardTitle>Szczegóły projektu</CardTitle>
-        <CardDescription>
+    <Card data-testid="project-form" className="py-3 md:py-6 gap-3 md:gap-6">
+      <CardHeader className="px-3 md:px-6">
+        <CardTitle className="text-lg md:text-xl">Szczegóły projektu</CardTitle>
+        <CardDescription className="text-xs md:text-sm">
           {mode === "edit" ? "Edytuj informacje o projekcie" : "Wypełnij wszystkie wymagane pola, aby dodać projekt"}
         </CardDescription>
       </CardHeader>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 md:space-y-6 px-3 md:px-6">
             <ProjectFormFields
               mode={mode}
               projectId={projectId}
@@ -135,14 +135,14 @@ export function ProjectForm({
               isAIEnabled={isAIEnabled}
             />
           </CardContent>
-          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-3 md:gap-4 mt-4 md:mt-8 px-3 md:px-6">
             <Button
               data-testid="cancel-project-button"
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto text-xs md:text-sm"
             >
               Anuluj
             </Button>
@@ -150,11 +150,11 @@ export function ProjectForm({
               data-testid="submit-project-button"
               type="submit"
               disabled={isSubmitting || !isValid}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto text-xs md:text-sm"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  <Loader2 className="size-3 md:size-4 mr-2 animate-spin" />
                   Zapisywanie...
                 </>
               ) : mode === "edit" ? (

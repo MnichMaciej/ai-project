@@ -65,20 +65,20 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
 
   return (
     <>
-      <Card className="flex flex-col h-full transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
-        <CardHeader>
+      <Card className="flex flex-col h-full transition-all hover:shadow-lg hover:-translate-y-1 duration-300 py-3 md:py-6 gap-3 md:gap-6">
+        <CardHeader className="px-3 md:px-6">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-xl">{project.name}</CardTitle>
+            <CardTitle className="text-lg md:text-xl">{project.name}</CardTitle>
             <Badge variant={getStatusVariant(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
-          <CardDescription className="line-clamp-2">{project.description}</CardDescription>
+          <CardDescription className="line-clamp-2 text-xs md:text-sm">{project.description}</CardDescription>
         </CardHeader>
 
-        <CardContent className="flex-1">
+        <CardContent className="flex-1 px-3 md:px-6">
           {project.technologies.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
               {project.technologies.map((tech, index) => (
-                <Badge key={index} variant="secondary">
+                <Badge key={index} variant="secondary" className="text-xs">
                   {tech}
                 </Badge>
               ))}
@@ -86,18 +86,18 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           )}
 
           {(project.repoUrl || project.demoUrl) && (
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-3 md:mt-4">
               {project.repoUrl && (
                 <a
                   href={project.repoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label={`Repozytorium projektu ${project.name}`}
                 >
-                  <Github className="size-4" />
+                  <Github className="size-3 md:size-4" />
                   <span>Repo</span>
-                  <ExternalLink className="size-3" />
+                  <ExternalLink className="size-2.5 md:size-3" />
                 </a>
               )}
               {project.demoUrl && (
@@ -105,10 +105,10 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
                   href={project.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label={`Demo projektu ${project.name}`}
                 >
-                  <ExternalLink className="size-4" />
+                  <ExternalLink className="size-3 md:size-4" />
                   <span>Demo</span>
                 </a>
               )}
@@ -116,15 +116,15 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           )}
         </CardContent>
 
-        <CardFooter className="flex gap-2">
+        <CardFooter className="flex gap-1.5 md:gap-2 px-3 md:px-6">
           <Button
             variant="outline"
             size="sm"
             onClick={handleEditClick}
             aria-label={`Edytuj projekt ${project.name}`}
-            className="flex-1"
+            className="flex-1 text-xs md:text-sm"
           >
-            <Edit />
+            <Edit className="size-3 md:size-4" />
             Edytuj
           </Button>
           <Button
@@ -132,9 +132,9 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
             size="sm"
             onClick={handleDeleteClick}
             aria-label={`Usuń projekt ${project.name}`}
-            className="flex-1"
+            className="flex-1 text-xs md:text-sm"
           >
-            <Trash2 />
+            <Trash2 className="size-3 md:size-4" />
             Usuń
           </Button>
         </CardFooter>
