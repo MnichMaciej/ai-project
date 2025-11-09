@@ -133,6 +133,38 @@ Unresolved items include final AI model selection and account unlock process (e.
 
 This is an MVP in active development. The codebase starts from an Astro template (`10x-astro-starter`) and is currently clean with no pending commits. Core features (auth, CRUD, AI integration) are planned per the PRD user stories. AI model and backend setup (Supabase) are pending configuration.
 
+## Deployment
+
+The application is deployed on Vercel for production hosting. Vercel provides excellent support for Astro applications with SSR capabilities.
+
+### Deploying to Vercel
+
+1. **Connect your GitHub repository** to Vercel via the Vercel dashboard (vercel.com).
+
+2. **Install Vercel CLI** (optional, for local deployments):
+   ```
+   npm i -g vercel
+   ```
+
+3. **Update Astro configuration** for Vercel compatibility:
+   - Install the Vercel adapter: `npm install @astrojs/vercel`
+   - Update `astro.config.mjs` to use the Vercel adapter instead of Node.js:
+     ```js
+     import vercel from '@astrojs/vercel';
+     // ...
+     adapter: vercel({
+       webAnalytics: { enabled: true },
+     }),
+     ```
+
+4. **Deploy**:
+   - From dashboard: Import project and deploy.
+   - From CLI: Run `vercel` in the project root and follow prompts.
+
+Environment variables (SUPABASE_URL, SUPABASE_ANON_KEY, OPENROUTER_API_KEY) must be set in Vercel dashboard under project settings.
+
+For more details, see [Vercel Astro Documentation](https://vercel.com/docs/frameworks/astro).
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. (Note: If no LICENSE file exists, create one with standard MIT terms.)

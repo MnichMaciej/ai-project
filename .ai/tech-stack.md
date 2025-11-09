@@ -24,3 +24,11 @@ Testowanie - Narzędzia do zapewnienia jakości kodu:
 - React Testing Library - narzędzia do testowania komponentów React z naciskiem na testowanie zorientowane na użytkownika
 - Playwright - framework do testów end-to-end z obsługą wielu przeglądarek (Chromium, Firefox, WebKit)
 - Codecov - raportowanie i śledzenie pokrycia kodu testami dla metryk jakości testów
+
+Hosting - Vercel jako platforma deploymentu:
+
+- Zapewnia serverless deployment z natywnym wsparciem dla Astro SSR
+- Globalny CDN dla szybkiego ładowania stron
+- Automatyczne deployments z GitHub
+- Zarządzanie environment variables i secrets
+- Darmowy tier odpowiedni dla side projects
