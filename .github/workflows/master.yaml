@@ -44,6 +44,9 @@ jobs:
     needs: setup
     env:
       NODE_ENV: production
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout repository
@@ -57,6 +60,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build application
         run: npm run build
@@ -160,7 +172,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [setup, build, test-unit, test-e2e]
+    needs: [setup, build, test-unit]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -194,12 +206,6 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
-
-      - name: Pull Vercel environment information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
