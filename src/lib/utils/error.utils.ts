@@ -20,6 +20,7 @@ export interface ApiError {
   field?: string; // For field-specific errors
   statusCode?: number;
   failedAttempts?: number; // For login errors
+  details?: string[]; // For validation error details (e.g., project validation errors)
 }
 
 /**
@@ -44,7 +45,7 @@ export function isNetworkError(error: unknown): boolean {
  */
 export function parseApiError(response: Response, errorData: unknown, defaultMessage: string): ApiError {
   const statusCode = response.status;
-  const errorResponse = errorData as AuthErrorResponseDto;
+  const errorResponse = errorData as AuthErrorResponseDto & { details?: string[] };
 
   // Determine error type based on status code
   let errorType: ErrorType;
@@ -80,6 +81,7 @@ export function parseApiError(response: Response, errorData: unknown, defaultMes
     field,
     statusCode,
     failedAttempts: errorResponse?.failedAttempts,
+    details: errorResponse?.details,
   };
 }
 

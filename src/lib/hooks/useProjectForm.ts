@@ -5,6 +5,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 import type { CreateProjectDto } from "@/types";
 import { ProjectStatus as ProjectStatusEnum } from "@/types";
+import { projectService } from "@/lib/services/project.service";
+import { ErrorType, type ApiError } from "@/lib/utils/error.utils";
 
 // Extended client-side validation schema with stricter rules
 export const createProjectFormSchema = z.object({
@@ -114,7 +116,7 @@ export function mapServerErrorsToForm<T extends Record<string, unknown>>(
       if (match) {
         const [, fieldPath, message] = match;
         const fieldName = fieldPath.split(".")[0] as keyof T;
-        form.setError(fieldName, { type: "server", message });
+        form.setError(fieldName as `root.${string}`, { type: "server", message });
       }
     });
   }
@@ -154,38 +156,8 @@ export function useProjectForm(): UseProjectFormReturn {
       // Transform form data to CreateProjectDto format
       const projectData: CreateProjectDto = transformFormData(data) as CreateProjectDto;
 
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(projectData),
-      });
-
-      if (!response.ok) {
-        // Handle error responses
-        let errorMessage = "Nie udało się utworzyć projektu";
-        let errorDetails: string[] | undefined;
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          errorDetails = errorData.details;
-
-          // Map server validation errors to form fields
-          mapServerErrorsToForm(errorDetails, form);
-        } catch {
-          // If parsing fails, use default error message
-        }
-
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        toast.error(errorMessage);
-        return;
-      }
+      // Create project using service
+      await projectService.createProject(projectData);
 
       // Success - show toast and redirect
       toast.success("Projekt został pomyślnie dodany");
@@ -193,12 +165,28 @@ export function useProjectForm(): UseProjectFormReturn {
     } catch (error) {
       console.error("Error creating project:", error);
 
-      // Handle network errors
-      if (error instanceof Error && error.message.includes("fetch")) {
-        toast.error("Błąd połączenia z serwerem. Sprawdź połączenie internetowe.");
-      } else {
-        toast.error("Nie udało się utworzyć projektu. Spróbuj ponownie.");
+      // Handle ApiError instances
+      if (error && typeof error === "object" && "type" in error) {
+        const apiError = error as ApiError;
+
+        // Handle authentication errors
+        if (apiError.type === ErrorType.AUTHENTICATION) {
+          window.location.href = "/login";
+          return;
+        }
+
+        // Map server validation errors to form fields
+        if (apiError.details && apiError.details.length > 0) {
+          mapServerErrorsToForm(apiError.details, form);
+        }
+
+        // Show error toast
+        toast.error(apiError.message);
+        return;
       }
+
+      // Handle unexpected errors
+      toast.error("Nie udało się utworzyć projektu. Spróbuj ponownie.");
     } finally {
       setIsSubmitting(false);
     }

@@ -9,7 +9,13 @@ import type {
   UpdatePasswordResponseDto,
   AuthErrorResponseDto,
 } from "../../types.ts";
-import { parseApiError, createNetworkError, createGenericError, isNetworkError, type ApiError } from "../utils/error.utils.ts";
+import {
+  parseApiError,
+  createNetworkError,
+  createGenericError,
+  isNetworkError,
+  type ApiError,
+} from "../utils/error.utils.ts";
 
 /**
  * Authentication API service
@@ -19,18 +25,14 @@ import { parseApiError, createNetworkError, createGenericError, isNetworkError, 
 export class AuthService {
   private readonly baseUrl: string;
 
-  constructor(baseUrl: string = "") {
+  constructor(baseUrl = "") {
     this.baseUrl = baseUrl;
   }
 
   /**
    * Makes a typed API request with error handling
    */
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-    defaultError: string
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}, defaultError: string): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const abortController = new AbortController();
 
@@ -167,4 +169,3 @@ export class AuthService {
 
 // Export singleton instance
 export const authService = new AuthService();
-

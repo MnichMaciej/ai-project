@@ -4,6 +4,8 @@ import type { GenerateProjectAIRequest, GenerateProjectAIResponse } from "@/type
 import type { UseFormReturn } from "react-hook-form";
 import type { CreateProjectFormData } from "./useProjectForm";
 import type { UpdateProjectFormData } from "./useProjectEditForm";
+import { projectService } from "@/lib/services/project.service";
+import { ErrorType, type ApiError } from "@/lib/utils/error.utils";
 
 // ViewModel types for AI generation state
 export type AIStatus = "idle" | "loading" | "success" | "error";
@@ -129,7 +131,13 @@ export function useAIGeneration({
   }, [state.queryCount, projectId]);
 
   const closeInput = React.useCallback(() => {
-    // Abort ongoing request if any
+    // Cancel ongoing request via service
+    if (projectId) {
+      const requestId = `ai-generate-${projectId}`;
+      projectService.cancelRequest(requestId);
+    }
+
+    // Abort ongoing request if any (local controller)
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -143,7 +151,7 @@ export function useAIGeneration({
       error: null,
       status: "idle",
     }));
-  }, []);
+  }, [projectId]);
 
   const validateLinks = React.useCallback((input: string): FileLinksValidation => {
     return validateFileLinks(input);
@@ -192,7 +200,8 @@ export function useAIGeneration({
         };
       });
 
-      // Create abort controller for request cancellation
+      // Create request ID for cancellation
+      const requestId = `ai-generate-${projectId}`;
       abortControllerRef.current = new AbortController();
 
       try {
@@ -200,59 +209,8 @@ export function useAIGeneration({
           fileLinks: validation.links,
         };
 
-        const response = await fetch(`/api/projects/${projectId}/ai-generate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(request),
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          let errorMessage = "Nie udało się wygenerować danych z AI";
-
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
-          } catch {
-            // If parsing fails, use default error message
-          }
-
-          if (response.status === 401) {
-            window.location.href = "/login";
-            return;
-          }
-
-          if (response.status === 403) {
-            errorMessage = "Brak dostępu do tego projektu";
-          }
-
-          if (response.status === 404) {
-            errorMessage = "Projekt nie został znaleziony";
-          }
-
-          if (response.status === 429) {
-            errorMessage = `Osiągnięto limit ${MAX_QUERIES} zapytań na projekt`;
-          }
-
-          if (response.status === 500) {
-            errorMessage = "Błąd serwera AI. Spróbuj ponownie później.";
-          }
-
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            error: errorMessage,
-            status: "error",
-          }));
-
-          toast.error(errorMessage);
-          return;
-        }
-
-        const data: GenerateProjectAIResponse = await response.json();
+        // Generate AI using service
+        const data = await projectService.generateAI(projectId, request, requestId);
 
         // Update form fields with AI-generated data
         form.setValue("description", data.description, { shouldValidate: true });
@@ -285,6 +243,39 @@ export function useAIGeneration({
             status: "idle",
             error: null,
           }));
+          return;
+        }
+
+        // Handle ApiError instances
+        if (error && typeof error === "object" && "type" in error) {
+          const apiError = error as ApiError;
+          let errorMessage = apiError.message;
+
+          // Handle authentication errors
+          if (apiError.type === ErrorType.AUTHENTICATION) {
+            window.location.href = "/login";
+            return;
+          }
+
+          // Handle specific status codes
+          if (apiError.statusCode === 403) {
+            errorMessage = "Brak dostępu do tego projektu";
+          } else if (apiError.statusCode === 404) {
+            errorMessage = "Projekt nie został znaleziony";
+          } else if (apiError.statusCode === 429) {
+            errorMessage = `Osiągnięto limit ${MAX_QUERIES} zapytań na projekt`;
+          } else if (apiError.statusCode === 500) {
+            errorMessage = "Błąd serwera AI. Spróbuj ponownie później.";
+          }
+
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: errorMessage,
+            status: "error",
+          }));
+
+          toast.error(errorMessage);
           return;
         }
 

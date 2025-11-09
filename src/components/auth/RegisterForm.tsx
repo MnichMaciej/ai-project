@@ -197,7 +197,7 @@ export function RegisterForm() {
           </Button>
           <p className="text-xs text-center text-muted-foreground">
             Masz już konto?{" "}
-            <a href="/auth/login" className="text-primary hover:underline">
+            <a href="/auth/login" className="text-primary hover:underline cursor-pointer">
               Zaloguj się
             </a>
           </p>

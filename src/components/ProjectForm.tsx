@@ -1,13 +1,8 @@
 import React from "react";
-import { Controller } from "react-hook-form";
+import { FormProvider, useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { ProjectStatus } from "@/types";
-import { X, Plus, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 
 // Form data types - matches the schema from hooks
@@ -15,6 +10,13 @@ import type { CreateProjectFormData } from "@/lib/hooks/useProjectForm";
 import type { UpdateProjectFormData } from "@/lib/hooks/useProjectEditForm";
 import { AISection } from "@/components/ai/AISection";
 import { useAIGeneration } from "@/lib/hooks/useAIGeneration";
+
+// Field components
+import { ProjectNameField } from "@/components/project/ProjectNameField";
+import { ProjectDescriptionField } from "@/components/project/ProjectDescriptionField";
+import { ProjectTechnologiesField } from "@/components/project/ProjectTechnologiesField";
+import { ProjectStatusField } from "@/components/project/ProjectStatusField";
+import { ProjectUrlField } from "@/components/project/ProjectUrlField";
 
 type ProjectFormData = CreateProjectFormData | UpdateProjectFormData;
 
@@ -29,16 +31,76 @@ interface ProjectFormProps {
   isAIEnabled?: boolean;
 }
 
-const statusLabels: Record<ProjectStatus, string> = {
-  [ProjectStatus.PLANNING]: "Planowanie",
-  [ProjectStatus.IN_PROGRESS]: "W trakcie",
-  [ProjectStatus.MVP_COMPLETED]: "MVP ukończony",
-  [ProjectStatus.FINISHED]: "Zakończony",
-};
+/**
+ * ProjectFormFields - Internal component that uses form context
+ * Separated to allow FormProvider wrapping
+ */
+function ProjectFormFields({
+  mode,
+  projectId,
+  initialQueryCount,
+  isAIEnabled,
+}: {
+  mode: "create" | "edit";
+  projectId: string | null;
+  initialQueryCount: number;
+  isAIEnabled: boolean;
+}) {
+  const form = useFormContext<ProjectFormData>();
+
+  // AI Generation hook
+  const aiGeneration = useAIGeneration({
+    projectId,
+    initialQueryCount,
+    form,
+  });
+
+  return (
+    <>
+      <ProjectNameField />
+      <ProjectDescriptionField />
+      <ProjectTechnologiesField />
+
+      {/* AI Section - Only show in edit mode or when projectId is available */}
+      {mode === "edit" && projectId && isAIEnabled && (
+        <AISection
+          projectId={projectId}
+          queryCount={aiGeneration.state.queryCount}
+          aiState={aiGeneration.state}
+          onOpenInput={aiGeneration.openInput}
+          onCloseInput={aiGeneration.closeInput}
+          onFileLinksChange={aiGeneration.setFileLinks}
+          onFileLinksSubmit={aiGeneration.generateAI}
+          onValidateLinks={aiGeneration.validateLinks}
+        />
+      )}
+
+      <ProjectStatusField />
+      <ProjectUrlField
+        fieldName="repoUrl"
+        label="URL repozytorium"
+        placeholder="https://github.com/username/repo"
+        testId="project-repo-url-input"
+      />
+      <ProjectUrlField
+        fieldName="demoUrl"
+        label="URL dema"
+        placeholder="https://example.com"
+        testId="project-demo-url-input"
+      />
+      <ProjectUrlField
+        fieldName="previewUrl"
+        label="URL podglądu (obraz)"
+        placeholder="https://example.com/image.png"
+        testId="project-preview-url-input"
+      />
+    </>
+  );
+}
 
 /**
  * ProjectForm - Main form component for creating/editing projects
- * Handles all form fields, validation, and submission
+ * Uses FormProvider to provide form context to field components
  */
 export function ProjectForm({
   form,
@@ -51,43 +113,9 @@ export function ProjectForm({
   isAIEnabled = false,
 }: ProjectFormProps) {
   const {
-    register,
     handleSubmit,
-    formState: { errors, touchedFields, isValid },
-    control,
-    watch,
-    setValue,
+    formState: { isValid },
   } = form;
-
-  const watchedTechnologies = watch("technologies");
-  const [newTechnology, setNewTechnology] = React.useState("");
-
-  // AI Generation hook
-  const aiGeneration = useAIGeneration({
-    projectId,
-    initialQueryCount,
-    form,
-  });
-
-  const handleAddTechnology = () => {
-    const trimmed = newTechnology.trim();
-    if (trimmed && !watchedTechnologies?.includes(trimmed)) {
-      setValue("technologies", [...(watchedTechnologies ?? []), trimmed], { shouldValidate: true });
-      setNewTechnology("");
-    }
-  };
-
-  const handleRemoveTechnology = (index: number) => {
-    const updated = watchedTechnologies?.filter((_, i) => i !== index) ?? [];
-    setValue("technologies", updated, { shouldValidate: true });
-  };
-
-  const handleTechnologyKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTechnology();
-    }
-  };
 
   return (
     <Card data-testid="project-form">
@@ -97,313 +125,47 @@ export function ProjectForm({
           {mode === "edit" ? "Edytuj informacje o projekcie" : "Wypełnij wszystkie wymagane pola, aby dodać projekt"}
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-6">
-          {/* Name Input */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              Nazwa projektu <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              data-testid="project-name-input"
-              id="name"
-              type="text"
-              {...register("name")}
-              aria-invalid={errors.name ? "true" : "false"}
-              aria-describedby={errors.name ? "name-error" : undefined}
-              placeholder="np. E-commerce Platform"
-              maxLength={100}
-              className={
-                touchedFields.name && !errors.name && watch("name") ? "border-green-500 dark:border-green-600" : ""
-              }
-            />
-            {errors.name && (
-              <p id="name-error" className="text-sm text-destructive animate-in slide-in-from-top-1" role="alert">
-                {errors.name.message}
-              </p>
-            )}
-            {touchedFields.name && !errors.name && watch("name") && (
-              <p className="text-xs text-green-600 dark:text-green-500">Wygląda dobrze!</p>
-            )}
-          </div>
-
-          {/* Description Input */}
-          <div className="space-y-2">
-            <Label htmlFor="description">
-              Opis <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              data-testid="project-description-textarea"
-              id="description"
-              {...register("description")}
-              aria-invalid={errors.description ? "true" : "false"}
-              aria-describedby={errors.description ? "description-error" : undefined}
-              placeholder="Opisz swój projekt..."
-              rows={5}
-              maxLength={1000}
-              className={
-                touchedFields.description && !errors.description && (watch("description")?.length ?? 0) >= 10
-                  ? "border-green-500 dark:border-green-600"
-                  : ""
-              }
-            />
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                {watch("description")?.length || 0} / 1000 znaków (minimum 10)
-              </p>
-              {touchedFields.description && !errors.description && (watch("description")?.length ?? 0) >= 10 && (
-                <p className="text-xs text-green-600 dark:text-green-500">✓ Wystarczająco długi</p>
-              )}
-            </div>
-            {errors.description && (
-              <p
-                id="description-error"
-                className="text-sm text-destructive animate-in slide-in-from-top-1"
-                role="alert"
-              >
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          {/* Technologies Input */}
-          <div className="space-y-2">
-            <Label htmlFor="technologies">
-              Technologie <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {watchedTechnologies?.map((tech, index) => (
-                <div
-                  key={`${tech}-${index}`}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-secondary rounded-md text-sm"
-                >
-                  <span>{tech}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTechnology(index)}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label={`Usuń ${tech}`}
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                data-testid="new-technology-input"
-                id="technologies"
-                type="text"
-                value={newTechnology}
-                onChange={(e) => setNewTechnology(e.target.value)}
-                onKeyPress={handleTechnologyKeyPress}
-                placeholder="Dodaj technologię (Enter aby dodać)"
-                maxLength={50}
-                disabled={(watchedTechnologies?.length ?? 0) >= 10}
-              />
-              <Button
-                data-testid="add-technology-button"
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleAddTechnology}
-                disabled={
-                  !newTechnology.trim() ||
-                  watchedTechnologies?.includes(newTechnology.trim()) ||
-                  (watchedTechnologies?.length ?? 0) >= 10
-                }
-                aria-label="Dodaj technologię"
-              >
-                <Plus className="size-4" />
-              </Button>
-            </div>
-            <div className="flex items-center justify-between">
-              {(watchedTechnologies?.length ?? 0) >= 10 && (
-                <p className="text-xs text-muted-foreground">Maksymalnie 10 technologii</p>
-              )}
-              {(watchedTechnologies?.length ?? 0) > 0 &&
-                (watchedTechnologies?.length ?? 0) < 10 &&
-                !errors.technologies && (
-                  <p className="text-xs text-green-600 dark:text-green-500">
-                    ✓ {watchedTechnologies?.length ?? 0}{" "}
-                    {(watchedTechnologies?.length ?? 0) === 1 ? "technologia" : "technologie"}
-                  </p>
-                )}
-            </div>
-            {errors.technologies && (
-              <p
-                id="technologies-error"
-                className="text-sm text-destructive animate-in slide-in-from-top-1"
-                role="alert"
-              >
-                {errors.technologies.message}
-              </p>
-            )}
-          </div>
-
-          {/* AI Section - Only show in edit mode or when projectId is available */}
-          {mode === "edit" && projectId && isAIEnabled && (
-            <AISection
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6">
+            <ProjectFormFields
+              mode={mode}
               projectId={projectId}
-              queryCount={aiGeneration.state.queryCount}
-              aiState={aiGeneration.state}
-              onOpenInput={aiGeneration.openInput}
-              onCloseInput={aiGeneration.closeInput}
-              onFileLinksChange={aiGeneration.setFileLinks}
-              onFileLinksSubmit={aiGeneration.generateAI}
-              onValidateLinks={aiGeneration.validateLinks}
+              initialQueryCount={initialQueryCount}
+              isAIEnabled={isAIEnabled}
             />
-          )}
-
-          {/* Status Select */}
-          <div className="space-y-2">
-            <Label htmlFor="status">
-              Status <span className="text-destructive">*</span>
-            </Label>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger
-                    data-testid="project-status-select"
-                    id="status"
-                    aria-invalid={errors.status ? "true" : "false"}
-                  >
-                    <SelectValue placeholder="Wybierz status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(ProjectStatus).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {statusLabels[status]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          </CardContent>
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
+            <Button
+              data-testid="cancel-project-button"
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Anuluj
+            </Button>
+            <Button
+              data-testid="submit-project-button"
+              type="submit"
+              disabled={isSubmitting || !isValid}
+              className="w-full sm:w-auto"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Zapisywanie...
+                </>
+              ) : mode === "edit" ? (
+                "Zaktualizuj projekt"
+              ) : (
+                "Zapisz projekt"
               )}
-            />
-            {errors.status && (
-              <p id="status-error" className="text-sm text-destructive animate-in slide-in-from-top-1" role="alert">
-                {errors.status.message}
-              </p>
-            )}
-          </div>
-
-          {/* Repo URL Input */}
-          <div className="space-y-2">
-            <Label htmlFor="repoUrl">URL repozytorium</Label>
-            <Input
-              data-testid="project-repo-url-input"
-              id="repoUrl"
-              type="url"
-              {...register("repoUrl", {
-                setValueAs: (value) => (value === "" ? null : value),
-              })}
-              aria-invalid={errors.repoUrl ? "true" : "false"}
-              aria-describedby={errors.repoUrl ? "repoUrl-error" : undefined}
-              placeholder="https://github.com/username/repo"
-              defaultValue={watch("repoUrl") || ""}
-            />
-            {errors.repoUrl && (
-              <p id="repoUrl-error" className="text-sm text-destructive animate-in slide-in-from-top-1" role="alert">
-                {errors.repoUrl.message}
-              </p>
-            )}
-            {touchedFields.repoUrl && !errors.repoUrl && watch("repoUrl") && (
-              <p className="text-xs text-green-600 dark:text-green-500">✓ Poprawny format URL</p>
-            )}
-          </div>
-
-          {/* Demo URL Input */}
-          <div className="space-y-2">
-            <Label htmlFor="demoUrl">URL dema</Label>
-            <Input
-              data-testid="project-demo-url-input"
-              id="demoUrl"
-              type="url"
-              {...register("demoUrl", {
-                setValueAs: (value) => (value === "" ? null : value),
-              })}
-              aria-invalid={errors.demoUrl ? "true" : "false"}
-              aria-describedby={errors.demoUrl ? "demoUrl-error" : undefined}
-              placeholder="https://example.com"
-              defaultValue={watch("demoUrl") || ""}
-              className={
-                touchedFields.demoUrl && !errors.demoUrl && watch("demoUrl")
-                  ? "border-green-500 dark:border-green-600"
-                  : ""
-              }
-            />
-            {errors.demoUrl && (
-              <p id="demoUrl-error" className="text-sm text-destructive animate-in slide-in-from-top-1" role="alert">
-                {errors.demoUrl.message}
-              </p>
-            )}
-            {touchedFields.demoUrl && !errors.demoUrl && watch("demoUrl") && (
-              <p className="text-xs text-green-600 dark:text-green-500">✓ Poprawny format URL</p>
-            )}
-          </div>
-
-          {/* Preview URL Input */}
-          <div className="space-y-2">
-            <Label htmlFor="previewUrl">URL podglądu (obraz)</Label>
-            <Input
-              data-testid="project-preview-url-input"
-              id="previewUrl"
-              type="url"
-              {...register("previewUrl", {
-                setValueAs: (value) => (value === "" ? null : value),
-              })}
-              aria-invalid={errors.previewUrl ? "true" : "false"}
-              aria-describedby={errors.previewUrl ? "previewUrl-error" : undefined}
-              placeholder="https://example.com/image.png"
-              defaultValue={watch("previewUrl") || ""}
-              className={
-                touchedFields.previewUrl && !errors.previewUrl && watch("previewUrl")
-                  ? "border-green-500 dark:border-green-600"
-                  : ""
-              }
-            />
-            {errors.previewUrl && (
-              <p id="previewUrl-error" className="text-sm text-destructive animate-in slide-in-from-top-1" role="alert">
-                {errors.previewUrl.message}
-              </p>
-            )}
-            {touchedFields.previewUrl && !errors.previewUrl && watch("previewUrl") && (
-              <p className="text-xs text-green-600 dark:text-green-500">✓ Poprawny format URL</p>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 mt-8">
-          <Button
-            data-testid="cancel-project-button"
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto"
-          >
-            Anuluj
-          </Button>
-          <Button
-            data-testid="submit-project-button"
-            type="submit"
-            disabled={isSubmitting || !isValid}
-            className="w-full sm:w-auto"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="size-4 mr-2 animate-spin" />
-                Zapisywanie...
-              </>
-            ) : mode === "edit" ? (
-              "Zaktualizuj projekt"
-            ) : (
-              "Zapisz projekt"
-            )}
-          </Button>
-        </CardFooter>
-      </form>
+            </Button>
+          </CardFooter>
+        </form>
+      </FormProvider>
     </Card>
   );
 }

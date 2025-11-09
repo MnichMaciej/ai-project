@@ -3,6 +3,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useProjectForm, transformFormData, mapServerErrorsToForm } from "@/lib/hooks/useProjectForm";
 import { ProjectStatus } from "@/types";
 import { toast } from "sonner";
+import { ErrorType } from "@/lib/utils/error.utils";
+import type { ApiError } from "@/lib/utils/error.utils";
+import { projectService } from "@/lib/services/project.service";
 
 // Mock sonner toast
 vi.mock("sonner", () => ({
@@ -21,8 +24,12 @@ Object.defineProperty(window, "location", {
   writable: true,
 });
 
-// Mock fetch
-global.fetch = vi.fn();
+// Mock projectService
+vi.mock("@/lib/services/project.service", () => ({
+  projectService: {
+    createProject: vi.fn(),
+  },
+}));
 
 describe("useProjectForm", () => {
   beforeEach(() => {
@@ -101,10 +108,7 @@ describe("useProjectForm", () => {
         updatedAt: "2024-01-01",
       };
 
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockProject,
-      });
+      vi.mocked(projectService.createProject).mockResolvedValue(mockProject);
 
       result.current.form.setValue("name", "Test Project");
       result.current.form.setValue("description", "Description");
@@ -116,20 +120,14 @@ describe("useProjectForm", () => {
 
       // Assert
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith("/api/projects", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: "Test Project",
-            description: "Description",
-            technologies: ["React"],
-            status: ProjectStatus.PLANNING,
-            repoUrl: null,
-            demoUrl: null,
-            previewUrl: null,
-          }),
+        expect(vi.mocked(projectService.createProject)).toHaveBeenCalledWith({
+          name: "Test Project",
+          description: "Description",
+          technologies: ["React"],
+          status: ProjectStatus.PLANNING,
+          repoUrl: null,
+          demoUrl: null,
+          previewUrl: null,
         });
         expect(toast.success).toHaveBeenCalledWith("Projekt został pomyślnie dodany");
         expect(mockLocation.href).toBe("/projects");
@@ -140,14 +138,14 @@ describe("useProjectForm", () => {
       // Arrange
       const { result } = renderHook(() => useProjectForm());
 
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        json: async () => ({
-          error: "Validation failed",
-          details: ["name: Nazwa jest wymagana"],
-        }),
-      });
+      const apiError: ApiError = {
+        type: ErrorType.VALIDATION,
+        message: "Validation failed",
+        statusCode: 400,
+        details: ["name: Nazwa jest wymagana"],
+      };
+
+      vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
       result.current.form.setValue("name", "Test");
       result.current.form.setValue("description", "Description");
@@ -167,11 +165,13 @@ describe("useProjectForm", () => {
       // Arrange
       const { result } = renderHook(() => useProjectForm());
 
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 401,
-        json: async () => ({ error: "Unauthorized" }),
-      });
+      const apiError: ApiError = {
+        type: ErrorType.AUTHENTICATION,
+        message: "Unauthorized",
+        statusCode: 401,
+      };
+
+      vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
       result.current.form.setValue("name", "Test");
       result.current.form.setValue("description", "Description");
@@ -193,7 +193,12 @@ describe("useProjectForm", () => {
       // Arrange
       const { result } = renderHook(() => useProjectForm());
 
-      global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+      const apiError: ApiError = {
+        type: ErrorType.NETWORK,
+        message: "Błąd połączenia z serwerem. Sprawdź połączenie internetowe.",
+      };
+
+      vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
       result.current.form.setValue("name", "Test");
       result.current.form.setValue("description", "Description");
@@ -213,13 +218,13 @@ describe("useProjectForm", () => {
       // Arrange
       const { result } = renderHook(() => useProjectForm());
 
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => {
-          throw new Error("Invalid JSON");
-        },
-      });
+      const apiError: ApiError = {
+        type: ErrorType.SERVER,
+        message: "Nie udało się utworzyć projektu",
+        statusCode: 500,
+      };
+
+      vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
       result.current.form.setValue("name", "Test");
       result.current.form.setValue("description", "Description");

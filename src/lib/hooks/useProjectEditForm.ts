@@ -5,7 +5,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 import type { UpdateProjectDto, ProjectDto } from "@/types";
 import { createProjectFormSchema, transformFormData, mapServerErrorsToForm } from "@/lib/hooks/useProjectForm";
-import { fetchProjectQueryCount } from "@/lib/hooks/useProjectQueryCount";
+import { projectService } from "@/lib/services/project.service";
+import { ErrorType, type ApiError } from "@/lib/utils/error.utils";
 
 // Update form schema - partial schema for editing (all fields optional, but validate if provided)
 const updateProjectFormSchema = createProjectFormSchema.partial().superRefine((data, ctx) => {
@@ -64,32 +65,15 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
 
   // Fetch project data on mount
   React.useEffect(() => {
+    const requestId = `fetch-project-${projectId}`;
+
     const fetchProject = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            window.location.href = "/login";
-            return;
-          }
-          if (response.status === 404) {
-            toast.error("Projekt nie został znaleziony");
-            window.location.href = "/projects";
-            return;
-          }
-          throw new Error("Nie udało się pobrać projektu");
-        }
-
-        const projectData: ProjectDto = await response.json();
+        // Fetch project using service
+        const projectData = await projectService.getProject(projectId, requestId);
         setProject(projectData);
 
         // Pre-fill form with project data
@@ -105,7 +89,7 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
 
         // Fetch query count for AI generation
         try {
-          const count = await fetchProjectQueryCount(projectId);
+          const count = await projectService.getProjectQueryCount(projectId);
           setQueryCount(count);
         } catch (queryCountError) {
           console.error("Error fetching query count:", queryCountError);
@@ -114,8 +98,30 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
         }
       } catch (error) {
         console.error("Error fetching project:", error);
-        toast.error("Nie udało się pobrać projektu. Spróbuj ponownie.");
-        setError({ message: error instanceof Error ? error.message : "Nie udało się pobrać projektu" });
+
+        // Handle ApiError instances
+        if (error && typeof error === "object" && "type" in error) {
+          const apiError = error as ApiError;
+
+          // Handle authentication errors
+          if (apiError.type === ErrorType.AUTHENTICATION) {
+            window.location.href = "/login";
+            return;
+          }
+
+          // Handle not found errors
+          if (apiError.statusCode === 404) {
+            toast.error("Projekt nie został znaleziony");
+            window.location.href = "/projects";
+            return;
+          }
+
+          setError({ message: apiError.message });
+          toast.error(apiError.message);
+        } else {
+          toast.error("Nie udało się pobrać projektu. Spróbuj ponownie.");
+          setError({ message: "Nie udało się pobrać projektu" });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -124,6 +130,11 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
     if (projectId) {
       fetchProject();
     }
+
+    // Cleanup: cancel request on unmount or projectId change
+    return () => {
+      projectService.cancelRequest(requestId);
+    };
   }, [projectId, form]);
 
   const onSubmit = async (data: UpdateProjectFormData) => {
@@ -134,51 +145,8 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
       // Transform form data to UpdateProjectDto format using shared helper
       const updateData: UpdateProjectDto = transformFormData(data) as UpdateProjectDto;
 
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Nie udało się zaktualizować projektu";
-        let errorDetails: string[] | undefined;
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          errorDetails = errorData.details;
-
-          // Map server validation errors to form fields using shared helper
-          mapServerErrorsToForm(errorDetails, form);
-        } catch {
-          // If parsing fails, use default error message
-        }
-
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-
-        if (response.status === 403) {
-          toast.error("Brak dostępu do tego projektu");
-          window.location.href = "/projects";
-          return;
-        }
-
-        if (response.status === 404) {
-          toast.error("Projekt nie został znaleziony");
-          window.location.href = "/projects";
-          return;
-        }
-
-        toast.error(errorMessage);
-        return;
-      }
-
-      const updatedProject: ProjectDto = await response.json();
+      // Update project using service
+      const updatedProject = await projectService.updateProject(projectId, updateData);
       setProject(updatedProject);
 
       // Success - show toast and redirect
@@ -187,14 +155,44 @@ export function useProjectEditForm(projectId: string): UseProjectEditFormReturn 
     } catch (error) {
       console.error("Error updating project:", error);
 
-      // Handle network errors
-      if (error instanceof Error && error.message.includes("fetch")) {
-        toast.error("Błąd połączenia z serwerem. Sprawdź połączenie internetowe.");
-        setError({ message: "Błąd połączenia z serwerem" });
-      } else {
-        toast.error("Nie udało się zaktualizować projektu. Spróbuj ponownie.");
-        setError({ message: "Nie udało się zaktualizować projektu" });
+      // Handle ApiError instances
+      if (error && typeof error === "object" && "type" in error) {
+        const apiError = error as ApiError;
+
+        // Handle authentication errors
+        if (apiError.type === ErrorType.AUTHENTICATION) {
+          window.location.href = "/login";
+          return;
+        }
+
+        // Handle authorization errors
+        if (apiError.type === ErrorType.AUTHORIZATION) {
+          toast.error("Brak dostępu do tego projektu");
+          window.location.href = "/projects";
+          return;
+        }
+
+        // Handle not found errors
+        if (apiError.statusCode === 404) {
+          toast.error("Projekt nie został znaleziony");
+          window.location.href = "/projects";
+          return;
+        }
+
+        // Map server validation errors to form fields
+        if (apiError.details && apiError.details.length > 0) {
+          mapServerErrorsToForm(apiError.details, form);
+        }
+
+        // Show error toast
+        toast.error(apiError.message);
+        setError({ message: apiError.message });
+        return;
       }
+
+      // Handle unexpected errors
+      toast.error("Nie udało się zaktualizować projektu. Spróbuj ponownie.");
+      setError({ message: "Nie udało się zaktualizować projektu" });
     } finally {
       setIsSubmitting(false);
     }

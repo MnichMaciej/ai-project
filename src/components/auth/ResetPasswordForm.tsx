@@ -106,7 +106,7 @@ export function ResetPasswordForm() {
           </Button>
           <p className="text-xs text-center text-muted-foreground">
             Pamiętasz hasło?{" "}
-            <a href="/auth/login" className="text-primary hover:underline">
+            <a href="/auth/login" className="text-primary hover:underline cursor-pointer">
               Zaloguj się
             </a>
           </p>

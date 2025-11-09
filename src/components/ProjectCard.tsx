@@ -92,7 +92,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
                   href={project.repoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label={`Repozytorium projektu ${project.name}`}
                 >
                   <Github className="size-4" />
@@ -105,7 +105,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
                   href={project.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   aria-label={`Demo projektu ${project.name}`}
                 >
                   <ExternalLink className="size-4" />
