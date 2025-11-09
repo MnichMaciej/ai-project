@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { authService } from "../services/auth.service.ts";
+import { isTokenError, type ApiError } from "../utils/error.utils.ts";
 
 // Update password form validation schema (same as register)
 export const updatePasswordFormSchema = z
@@ -51,57 +53,10 @@ export function useUpdatePasswordForm(): UseUpdatePasswordFormReturn {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/update-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password: data.password,
-          confirmPassword: data.confirmPassword,
-        }),
+      await authService.updatePassword({
+        password: data.password,
+        confirmPassword: data.confirmPassword,
       });
-
-      if (!response.ok) {
-        let errorMessage = "Nie udało się zaktualizować hasła";
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-
-          // Map specific errors to form fields
-          if (errorData.error?.includes("hasło") || errorData.error?.includes("password")) {
-            if (errorData.error?.includes("8 znaków")) {
-              form.setError("password", {
-                type: "server",
-                message: errorMessage,
-              });
-            } else if (errorData.error?.includes("identyczne")) {
-              form.setError("confirmPassword", {
-                type: "server",
-                message: errorMessage,
-              });
-            } else {
-              form.setError("password", {
-                type: "server",
-                message: errorMessage,
-              });
-            }
-          } else if (errorData.error?.includes("token") || errorData.error?.includes("wygasły")) {
-            // Token expired or invalid - redirect to reset password page
-            toast.error(errorMessage);
-            setTimeout(() => {
-              window.location.href = "/auth/reset-password";
-            }, 2000);
-            return;
-          }
-        } catch {
-          // If parsing fails, use default error message
-        }
-
-        toast.error(errorMessage);
-        return;
-      }
 
       // Success - show success message and redirect
       setIsSuccess(true);
@@ -112,14 +67,26 @@ export function useUpdatePasswordForm(): UseUpdatePasswordFormReturn {
         window.location.href = "/auth/login";
       }, 2000);
     } catch (error) {
-      console.error("Error updating password:", error);
+      const apiError = error as ApiError;
 
-      // Handle network errors
-      if (error instanceof Error && error.message.includes("fetch")) {
-        toast.error("Błąd połączenia z serwerem. Sprawdź połączenie internetowe.");
-      } else {
-        toast.error("Nie udało się zaktualizować hasła. Spróbuj ponownie.");
+      // Check if token is expired or invalid
+      if (isTokenError(apiError)) {
+        toast.error(apiError.message);
+        setTimeout(() => {
+          window.location.href = "/auth/reset-password";
+        }, 2000);
+        return;
       }
+
+      // Map error to form field if field is specified
+      if (apiError.field) {
+        form.setError(apiError.field as "password" | "confirmPassword", {
+          type: "server",
+          message: apiError.message,
+        });
+      }
+
+      toast.error(apiError.message);
     } finally {
       setIsSubmitting(false);
     }

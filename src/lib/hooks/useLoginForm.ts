@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import type { AuthErrorResponseDto, LoginResponseDto } from "../../types.ts";
+import { authService } from "../services/auth.service.ts";
+import { isAccountLockedError, type ApiError } from "../utils/error.utils.ts";
 
 // Login form validation schema
 export const loginFormSchema = z.object({
@@ -46,70 +47,41 @@ export function useLoginForm(): UseLoginFormReturn {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      const response = await authService.login({
+        email: data.email,
+        password: data.password,
       });
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        // Extract failedAttempts from error response if available
-        const errorData = responseData as AuthErrorResponseDto;
-        const serverFailedAttempts = errorData.failedAttempts ?? failedAttempts + 1;
-
-        // Synchronize with server
-        setFailedAttempts(serverFailedAttempts);
-
-        const errorMessage = errorData.error || "Nieprawidłowe dane logowania";
-
-        // Check if account is locked (US-003)
-        if (errorMessage.includes("zablokowane") || errorMessage.includes("locked") || response.status === 403) {
-          toast.error("Konto zablokowane, skontaktuj się z adminem");
-          return;
-        }
-
-        // Map specific errors
-        if (errorData.error?.includes("email") || errorData.error?.includes("e-mail")) {
-          form.setError("email", {
-            type: "server",
-            message: errorMessage,
-          });
-        } else {
-          form.setError("password", {
-            type: "server",
-            message: errorMessage,
-          });
-        }
-
-        if (serverFailedAttempts >= 5) {
-          toast.error("Konto zablokowane po 5 nieudanych próbach. Skontaktuj się z adminem.");
-        } else {
-          toast.error(errorMessage);
-        }
-
-        return;
-      }
-
       // Success - reset failed attempts and synchronize with server
-      const successData = responseData as LoginResponseDto;
-      setFailedAttempts(successData.failedAttempts ?? 0);
+      setFailedAttempts(response.failedAttempts ?? 0);
       toast.success("Zalogowano pomyślnie");
       window.location.href = "/projects";
     } catch (error) {
-      console.error("Error logging in:", error);
+      const apiError = error as ApiError;
 
-      // Handle network errors
-      if (error instanceof Error && error.message.includes("fetch")) {
-        toast.error("Błąd połączenia z serwerem. Sprawdź połączenie internetowe.");
+      // Extract failedAttempts from error if available
+      const serverFailedAttempts = apiError.failedAttempts ?? failedAttempts + 1;
+      setFailedAttempts(serverFailedAttempts);
+
+      // Check if account is locked
+      if (isAccountLockedError(apiError)) {
+        toast.error("Konto zablokowane, skontaktuj się z adminem");
+        return;
+      }
+
+      // Map error to form field if field is specified
+      if (apiError.field) {
+        form.setError(apiError.field as "email" | "password", {
+          type: "server",
+          message: apiError.message,
+        });
+      }
+
+      // Show appropriate error message
+      if (serverFailedAttempts >= 5) {
+        toast.error("Konto zablokowane po 5 nieudanych próbach. Skontaktuj się z adminem.");
       } else {
-        toast.error("Nie udało się zalogować. Spróbuj ponownie.");
+        toast.error(apiError.message);
       }
     } finally {
       setIsSubmitting(false);

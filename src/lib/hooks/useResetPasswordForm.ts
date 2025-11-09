@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { authService } from "../services/auth.service.ts";
+import { type ApiError } from "../utils/error.utils.ts";
 
 // Reset password form validation schema
 export const resetPasswordFormSchema = z.object({
@@ -42,50 +44,23 @@ export function useResetPasswordForm(): UseResetPasswordFormReturn {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Nie udało się wysłać linku resetującego hasło";
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-
-          // Map specific errors
-          if (errorData.error?.includes("email") || errorData.error?.includes("e-mail")) {
-            form.setError("email", {
-              type: "server",
-              message: errorMessage,
-            });
-          }
-        } catch {
-          // If parsing fails, use default error message
-        }
-
-        toast.error(errorMessage);
-        return;
-      }
+      await authService.resetPassword(data.email);
 
       // Success - show success message
       setIsSuccess(true);
       toast.success("Link do resetowania hasła został wysłany na podany adres e-mail");
     } catch (error) {
-      console.error("Error resetting password:", error);
+      const apiError = error as ApiError;
 
-      // Handle network errors
-      if (error instanceof Error && error.message.includes("fetch")) {
-        toast.error("Błąd połączenia z serwerem. Sprawdź połączenie internetowe.");
-      } else {
-        toast.error("Nie udało się wysłać linku resetującego hasło. Spróbuj ponownie.");
+      // Map error to form field if field is specified
+      if (apiError.field) {
+        form.setError(apiError.field as "email", {
+          type: "server",
+          message: apiError.message,
+        });
       }
+
+      toast.error(apiError.message);
     } finally {
       setIsSubmitting(false);
     }

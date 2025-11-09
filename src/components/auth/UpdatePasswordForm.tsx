@@ -160,7 +160,6 @@ export function UpdatePasswordForm() {
         <CardTitle>Ustaw nowe hasło</CardTitle>
         <CardDescription>Wprowadź nowe hasło dla swojego konta</CardDescription>
       </CardHeader>
-      about:blank#blocked
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-6">
           {/* Password Input */}
