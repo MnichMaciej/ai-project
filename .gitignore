@@ -34,3 +34,4 @@ playwright/.cache/
 
 # Playwright auth state
 tests/e2e/.auth/
+.vercel

@@ -149,11 +149,56 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, build, test-unit, test-e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
   summary:
     name: CI/CD Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [setup, build, test-unit, test-e2e]
+    needs: [setup, build, test-unit, test-e2e, deploy]
     if: always()
 
     steps:
@@ -166,6 +211,12 @@ jobs:
              [ "${{ needs.test-e2e.result }}" == "failure" ]; then
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "❌ CI/CD Pipeline failed"
+            exit 1
+          fi
+          DEPLOY_RESULT="${{ needs.deploy.result }}"
+          if [ "$DEPLOY_RESULT" != "skipped" ] && [ "$DEPLOY_RESULT" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD Pipeline failed (deployment failed)"
             exit 1
           fi
           echo "status=success" >> $GITHUB_OUTPUT
