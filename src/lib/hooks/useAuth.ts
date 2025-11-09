@@ -56,4 +56,3 @@ export function useAuth(): UseAuthReturn {
     loading,
   };
 }
-

@@ -36,7 +36,9 @@ export function NewProjectView() {
           <h1 data-testid="new-project-title" className="text-2xl md:text-3xl font-bold tracking-tight">
             Dodaj nowy projekt
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm md:text-base">Wypełnij formularz, aby dodać nowy projekt do portfolio</p>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base">
+            Wypełnij formularz, aby dodać nowy projekt do portfolio
+          </p>
         </div>
 
         <ProjectForm form={form} onSubmit={onSubmit} isSubmitting={isSubmitting} onCancel={handleCancel} />

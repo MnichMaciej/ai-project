@@ -98,7 +98,10 @@ export function ProjectsView() {
       <>
         <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 pb-24 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center justify-center text-center py-8 md:py-12">
-            <AlertCircle className="size-12 text-destructive mb-3 md:mb-4 animate-in zoom-in duration-300" aria-hidden="true" />
+            <AlertCircle
+              className="size-12 text-destructive mb-3 md:mb-4 animate-in zoom-in duration-300"
+              aria-hidden="true"
+            />
             <h2 className="text-2xl font-semibold mb-2">Wystąpił błąd</h2>
             <p className="text-muted-foreground mb-4 md:mb-6 max-w-md">{error}</p>
             <Button onClick={refetch}>Spróbuj ponownie</Button>
