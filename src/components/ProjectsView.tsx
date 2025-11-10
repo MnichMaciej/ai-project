@@ -130,14 +130,14 @@ export function ProjectsView() {
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 pb-24 md:pb-8 animate-in fade-in duration-300">
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Moje projekty</h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+            <h1 className="text-2xl md:text-3xl font-bold drop-shadow-sm">Moje projekty</h1>
+            <p className="text-foreground/80 mt-1 text-sm md:text-base font-medium drop-shadow-sm">
               {searchQuery.trim()
                 ? `${filteredProjects.length} z ${total} ${total === 1 ? "projektu" : "projektów"}`
                 : `${total} ${total === 1 ? "projekt" : total < 5 && total > 1 ? "projekty" : "projektów"}`}
             </p>
           </div>
-          <Button onClick={handleAddProject} className="hidden md:flex">
+          <Button onClick={handleAddProject} className="hidden md:flex shadow-lg hover:shadow-xl hover:scale-105 transition-all">
             Dodaj projekt
           </Button>
         </div>

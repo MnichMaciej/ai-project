@@ -65,10 +65,10 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
 
   return (
     <>
-      <Card className="flex flex-col h-full transition-all hover:shadow-lg hover:-translate-y-1 duration-300 py-3 md:py-6 gap-3 md:gap-6">
+      <Card className="flex flex-col h-full transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/50 duration-300 py-3 md:py-6 gap-3 md:gap-6">
         <CardHeader className="px-3 md:px-6">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg md:text-xl">{project.name}</CardTitle>
+            <CardTitle className="text-lg md:text-xl drop-shadow-sm">{project.name}</CardTitle>
             <Badge variant={getStatusVariant(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
           <CardDescription className="line-clamp-2 text-xs md:text-sm">{project.description}</CardDescription>

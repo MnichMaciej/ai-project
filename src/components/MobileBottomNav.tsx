@@ -110,7 +110,7 @@ export function MobileBottomNav({
     <>
       {/* Bottom Navigation Bar - Mobile Only */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border"
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-border shadow-2xl"
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around h-16 px-1">
@@ -121,11 +121,11 @@ export function MobileBottomNav({
                 <SheetTrigger asChild>
                   <button
                     onClick={handleSearchClick}
-                    className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors"
+                    className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors bg-card/50 backdrop-blur-sm border border-border/50"
                     aria-label="Wyszukaj projekty"
                   >
-                    <Search className="size-5 text-foreground" aria-hidden="true" />
-                    <span className="text-xs text-muted-foreground">Szukaj</span>
+                    <Search className="size-5 text-foreground drop-shadow" aria-hidden="true" />
+                    <span className="text-xs text-foreground/90 font-medium drop-shadow-sm">Szukaj</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[40vh]">
@@ -149,7 +149,7 @@ export function MobileBottomNav({
               {/* Add Project Button - Primary Action */}
               <button
                 onClick={handleAddProject}
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-1 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-1 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all shadow-lg"
                 aria-label="Dodaj nowy projekt"
               >
                 <Plus className="size-6" aria-hidden="true" />
@@ -161,17 +161,17 @@ export function MobileBottomNav({
               {/* Back Button */}
               <button
                 onClick={handleBack}
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors"
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors bg-card/50 backdrop-blur-sm border border-border/50"
                 aria-label="Powrót"
               >
-                <ArrowLeft className="size-5 text-foreground" aria-hidden="true" />
-                <span className="text-xs text-muted-foreground">Wstecz</span>
+                <ArrowLeft className="size-5 text-foreground drop-shadow" aria-hidden="true" />
+                <span className="text-xs text-foreground/90 font-medium drop-shadow-sm">Wstecz</span>
               </button>
 
               {/* Home Button - Primary Action */}
               <button
                 onClick={handleHome}
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-1 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 py-1 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-all shadow-lg"
                 aria-label="Strona główna"
               >
                 <Home className="size-6" aria-hidden="true" />
@@ -184,11 +184,11 @@ export function MobileBottomNav({
           <Sheet open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
             <SheetTrigger asChild>
               <button
-                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors"
+                className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1 rounded-lg hover:bg-accent transition-colors bg-card/50 backdrop-blur-sm border border-border/50"
                 aria-label="Menu użytkownika"
               >
-                <User className="size-5 text-foreground" aria-hidden="true" />
-                <span className="text-xs text-muted-foreground">Profil</span>
+                <User className="size-5 text-foreground drop-shadow" aria-hidden="true" />
+                <span className="text-xs text-foreground/90 font-medium drop-shadow-sm">Profil</span>
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-auto">

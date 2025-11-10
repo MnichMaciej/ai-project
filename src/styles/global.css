@@ -11,18 +11,20 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Emerald primary dla light mode */
+  --primary: oklch(0.55 0.17 165);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Emerald accent dla light mode */
+  --accent: oklch(0.95 0.03 165);
+  --accent-foreground: oklch(0.3 0.15 165);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.55 0.17 165);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -30,46 +32,69 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.55 0.17 165);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.03 165);
+  --sidebar-accent-foreground: oklch(0.3 0.15 165);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.55 0.17 165);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Głęboki ciemnoszary zamiast czarnego - Fluent 2 style */
+  --background: oklch(0.18 0.01 240);
+  --foreground: oklch(0.98 0 0);
+  
+  /* Karty z subtelnym gradientem i podświetleniem */
+  --card: oklch(0.22 0.012 240);
+  --card-foreground: oklch(0.98 0 0);
+  
+  /* Popover z większą głębią */
+  --popover: oklch(0.2 0.015 240);
+  --popover-foreground: oklch(0.98 0 0);
+  
+  /* Szmaragdowy primary - główny akcent aplikacji */
+  --primary: oklch(0.65 0.19 165);
+  --primary-foreground: oklch(0.15 0.01 240);
+  
+  /* Secondary z ciepłym odcieniem */
+  --secondary: oklch(0.28 0.02 260);
+  --secondary-foreground: oklch(0.98 0 0);
+  
+  /* Muted z większą saturacją */
+  --muted: oklch(0.26 0.015 250);
+  --muted-foreground: oklch(0.65 0.01 240);
+  
+  /* Accent szmaragdowy dla hover states */
+  --accent: oklch(0.3 0.05 165);
+  --accent-foreground: oklch(0.75 0.18 165);
+  
+  /* Destructive z większą widocznością */
+  --destructive: oklch(0.65 0.22 25);
+  
+  /* Border z subtelnym kolorem */
+  --border: oklch(0.32 0.02 240);
+  --input: oklch(0.28 0.02 250);
+  
+  /* Ring w kolorze primary dla spójności */
+  --ring: oklch(0.65 0.19 165);
+  
+  /* Charty z żywszymi kolorami */
+  --chart-1: oklch(0.65 0.19 165);
+  --chart-2: oklch(0.70 0.17 200);
+  --chart-3: oklch(0.75 0.16 280);
+  --chart-4: oklch(0.68 0.20 320);
+  --chart-5: oklch(0.72 0.18 60);
+  
+  /* Sidebar */
+  --sidebar: oklch(0.2 0.015 240);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.65 0.19 165);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.28 0.04 165);
+  --sidebar-accent-foreground: oklch(0.75 0.18 165);
+  --sidebar-border: oklch(0.32 0.02 240);
+  --sidebar-ring: oklch(0.65 0.19 165);
 }
 
 @theme inline {
@@ -116,6 +141,86 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Fluent 2 gradient overlay - subtelny efekt dla light mode */
+    background-image: radial-gradient(
+      circle at 20% 20%, 
+      oklch(0.22 0.03 165 / 0.15) 0%, 
+      transparent 50%
+    );
+    background-attachment: fixed;
+  }
+  
+  /* Mocny gradient dla dark mode - prawie neonowy emerald! */
+  .dark body {
+    background-image: 
+      radial-gradient(
+        circle at 15% 15%, 
+        oklch(0.50 0.24 165 / 0.55) 0%, 
+        oklch(0.38 0.18 165 / 0.35) 25%,
+        oklch(0.25 0.10 165 / 0.15) 45%,
+        transparent 65%
+      ),
+      radial-gradient(
+        circle at 85% 20%, 
+        oklch(0.45 0.22 175 / 0.45) 0%, 
+        oklch(0.32 0.14 180 / 0.25) 30%,
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 50% 90%, 
+        oklch(0.42 0.20 160 / 0.40) 0%, 
+        oklch(0.30 0.12 155 / 0.20) 35%,
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse at 70% 50%, 
+        oklch(0.35 0.16 170 / 0.30) 0%, 
+        transparent 70%
+      );
+    background-attachment: fixed;
+  }
+  
+  /* Emerald gradient dla specjalnych elementów */
+  .emerald-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(0.65 0.19 165) 0%,
+      oklch(0.55 0.16 175) 50%,
+      oklch(0.60 0.17 155) 100%
+    );
+  }
+  
+  /* Emerald gradient dla tekstu */
+  .emerald-gradient-text {
+    background: linear-gradient(
+      135deg,
+      oklch(0.70 0.20 165) 0%,
+      oklch(0.60 0.17 175) 50%,
+      oklch(0.65 0.18 155) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Glow effect dla emerald akcent */
+  .emerald-glow {
+    box-shadow: 
+      0 0 20px oklch(0.65 0.19 165 / 0.3),
+      0 0 40px oklch(0.65 0.19 165 / 0.1);
+  }
+  
+  /* Card z subtelnym podświetleniem - Fluent style */
+  .card-elevated {
+    background: linear-gradient(
+      145deg,
+      oklch(0.24 0.015 240) 0%,
+      oklch(0.20 0.012 240) 100%
+    );
+    border: 1px solid oklch(0.32 0.02 240);
+    box-shadow: 
+      0 2px 8px oklch(0 0 0 / 0.3),
+      inset 0 1px 0 oklch(1 0 0 / 0.05);
   }
 }
 
