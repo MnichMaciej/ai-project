@@ -22,7 +22,12 @@ export function EmptyState({ onAddProject }: EmptyStateProps) {
         Dodaj swój pierwszy projekt, aby rozpocząć budowanie swojego portfolio
       </p>
 
-      <Button onClick={onAddProject} size="lg" aria-label="Dodaj nowy projekt" className="shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+      <Button
+        onClick={onAddProject}
+        size="lg"
+        aria-label="Dodaj nowy projekt"
+        className="shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+      >
         <PlusCircle className="mr-2" />
         Dodaj projekt
       </Button>

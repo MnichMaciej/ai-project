@@ -137,7 +137,10 @@ export function ProjectsView() {
                 : `${total} ${total === 1 ? "projekt" : total < 5 && total > 1 ? "projekty" : "projektów"}`}
             </p>
           </div>
-          <Button onClick={handleAddProject} className="hidden md:flex shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+          <Button
+            onClick={handleAddProject}
+            className="hidden md:flex shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+          >
             Dodaj projekt
           </Button>
         </div>
