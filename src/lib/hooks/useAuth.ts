@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
-
-interface User {
-  id: string;
-  email: string;
-}
+import type { UserDto } from "../../types";
 
 interface UseAuthReturn {
-  user: User | null;
+  user: UserDto | null;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -16,7 +12,7 @@ interface UseAuthReturn {
  * Checks user session via API and provides authentication state
  */
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

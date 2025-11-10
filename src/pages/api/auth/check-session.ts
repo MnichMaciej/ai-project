@@ -32,6 +32,8 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       user: {
         id: user.id,
         email: user.email ?? "",
+        createdAt: user.created_at ?? new Date().toISOString(),
+        updatedAt: user.updated_at ?? new Date().toISOString(),
       },
     }),
     {

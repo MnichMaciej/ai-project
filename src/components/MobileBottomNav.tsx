@@ -205,6 +205,20 @@ export function MobileBottomNav({
                   <span className="text-sm font-medium">Motyw</span>
                   <ThemeToggle />
                 </div>
+                <div className="px-3 md:px-4">
+                  <Button
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      window.location.href = "/profile";
+                    }}
+                    variant="outline"
+                    className="w-full mb-2"
+                    aria-label="Profil"
+                  >
+                    <User className="size-4 mr-2" aria-hidden="true" />
+                    Profil
+                  </Button>
+                </div>
                 <div className="px-3 md:px-4 mb-2">
                   <Button
                     onClick={handleLogout}

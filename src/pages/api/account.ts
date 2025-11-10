@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { AccountService } from "../../../lib/services/account.service.ts";
-import type { DeleteAccountResponse } from "../../../types.ts";
+import { AccountService } from "../../lib/services/account.service.ts";
+import type { DeleteAccountResponse } from "../../types.ts";
 
 export const prerender = false;
 
@@ -11,7 +11,8 @@ export const prerender = false;
  * 1. Verifies user authentication via middleware (locals.user)
  * 2. Signs out the user session
  * 3. Deletes user record from database (triggers cascade deletion of projects)
- * 4. AI queries are soft-deleted via database trigger (preserves audit logs)
+ * 4. Deletes user from auth.users using Admin API
+ * 5. AI queries are soft-deleted via database trigger (preserves audit logs)
  *
  * Returns 200 OK with { success: true } on success
  * Returns 401 Unauthorized if user is not authenticated

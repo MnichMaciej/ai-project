@@ -135,6 +135,7 @@ export interface UserDto {
   id: string;
   createdAt: string;
   updatedAt: string;
+  email?: string;
 }
 
 // For auth responses, Supabase session types can be used directly, but custom locking fields may need extension if implemented

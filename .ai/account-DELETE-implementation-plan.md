@@ -15,7 +15,7 @@ This endpoint allows an authenticated user to delete their account, which includ
 
 ## 3. Wykorzystywane typy
 
-- **DeleteAccountResponse**: 
+- **DeleteAccountResponse**:
   ```typescript
   export interface DeleteAccountResponse {
     success: boolean;
