@@ -124,6 +124,11 @@ export interface UpdatePasswordResponseDto {
   };
 }
 
+// Delete account response DTO
+export interface DeleteAccountResponse {
+  success: boolean;
+}
+
 // Note: User-related DTOs are not fully defined in the API plan endpoints, but for completeness:
 // Basic user response (excludes sensitive fields)
 export interface UserDto {

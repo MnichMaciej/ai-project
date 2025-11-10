@@ -41,9 +41,9 @@ Architektura interfejsu użytkownika dla Portfol.io opiera się na minimalistycz
 ### Widok profilu użytkownika
 
 - **Ścieżka widoku**: /profile
-- **Główny cel**: Wyświetlenie listy projektów w kontekście profilu z opcjami zarządzania kontem, w tym usuwaniem.
-- **Kluczowe informacje do wyświetlenia**: Lista projektów podobna do strony głównej, sekcja ustawień z opcją usunięcia konta.
-- **Kluczowe komponenty widoku**: Lista projektów, modal potwierdzenia usunięcia konta/projektu.
+- **Główny cel**: Wyświetlenie rofilu z opcjami zarządzania kontem, w tym usuwaniem.
+- **Kluczowe informacje do wyświetlenia**: Sekcja ustawień z opcją usunięcia konta i zmianą hasła.
+- **Kluczowe komponenty widoku**: Modal potwierdzenia usunięcia konta.
 - **UX, dostępność i względy bezpieczeństwa**: CTA do edycji, ostrzeżenie przed usunięciem; semantyczne nagłówki, destructive buttons z potwierdzeniem, kasowanie danych po usunięciu.
 
 ## 3. Mapa podróży użytkownika

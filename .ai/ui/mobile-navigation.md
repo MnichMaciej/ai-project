@@ -100,3 +100,4 @@ This stack enables a performant, accessible mobile experience without introducin
 *Author: AI Frontend Specialist*  
 *Date: [Current Date]*  
 *References: .ai/tech-stack.md, src/components/ProjectsView.tsx, src/components/Header.astro*
+

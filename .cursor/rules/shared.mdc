@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
+
 # AI Rules for {app-name}
 
 {project-description}
@@ -28,7 +29,7 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers 
+- `./src/lib` - Services and helpers
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
@@ -38,6 +39,7 @@ When modifying the directory structure, always update this section.
 
 ### Guidelines for clean code
 
+- Always use LR instead of CRLF
 - Use feedback from linters to improve the code when making changes.
 - Prioritize error handling and edge cases.
 - Handle errors and edge cases at the beginning of functions.
