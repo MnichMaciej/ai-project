@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
 concurrency:
@@ -276,7 +281,7 @@ jobs:
           fi
 
       - name: Post comment on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           STATUS: ${{ steps.status.outputs.status }}
           MESSAGE: ${{ steps.status.outputs.message }}
