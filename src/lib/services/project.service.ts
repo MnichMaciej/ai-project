@@ -171,21 +171,74 @@ export class ProjectService {
 
   /**
    * Generates project data using AI
+   * Special handling for AI endpoint that returns GenerateProjectAIResponse with success: false for errors
    */
   async generateAI(
     id: string,
     request: GenerateProjectAIRequest,
     requestId?: string
   ): Promise<GenerateProjectAIResponse> {
-    return this.request<GenerateProjectAIResponse>(
-      `/api/projects/${id}/ai-generate`,
-      {
+    const url = `${this.baseUrl}/api/projects/${id}/ai-generate`;
+
+    // Cancel previous request with same ID if exists
+    if (requestId) {
+      this.abortControllers.get(requestId)?.abort();
+    }
+
+    const controller = new AbortController();
+    if (requestId) {
+      this.abortControllers.set(requestId, controller);
+    }
+
+    try {
+      const response = await fetch(url, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(request),
-      },
-      "Nie udało się wygenerować danych z AI",
-      requestId
-    );
+        signal: controller.signal,
+        credentials: "include",
+      });
+
+      // Parse response (even if status is not OK, we need to check success field)
+      const data = await response.json() as GenerateProjectAIResponse;
+
+      // If response has success: false, return it (hook will handle the error)
+      if (!data.success) {
+        return data;
+      }
+
+      // If response is not OK and doesn't have success field, throw error
+      if (!response.ok) {
+        const apiError = parseApiError(response, data, "Nie udało się wygenerować danych z AI");
+        throw apiError;
+      }
+
+      return data;
+    } catch (error) {
+      // Handle abort errors
+      if (error instanceof Error && error.name === "AbortError") {
+        throw createGenericError("Request cancelled");
+      }
+
+      // Re-throw ApiError instances
+      if (error && typeof error === "object" && "type" in error) {
+        throw error;
+      }
+
+      // Handle network errors
+      if (isNetworkError(error)) {
+        throw createNetworkError();
+      }
+
+      // Handle unexpected errors
+      throw createGenericError("Nie udało się wygenerować danych z AI");
+    } finally {
+      if (requestId) {
+        this.abortControllers.delete(requestId);
+      }
+    }
   }
 }
 

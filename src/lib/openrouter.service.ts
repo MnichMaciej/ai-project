@@ -23,6 +23,31 @@ export class ValidationError extends Error {
   }
 }
 
+/**
+ * Error thrown when all fallback models have been exhausted
+ */
+export class FallbackExhaustedError extends Error {
+  constructor(message = "Serwis AI jest chwilowo niedostępny, spróbuj później.") {
+    super(message);
+    this.name = "FallbackExhaustedError";
+    Object.setPrototypeOf(this, FallbackExhaustedError.prototype);
+  }
+}
+
+/**
+ * Error thrown when a limit is exceeded (e.g., query count, file count, file size)
+ */
+export class LimitExceededError extends Error {
+  constructor(
+    message: string,
+    public readonly limitType?: string
+  ) {
+    super(message);
+    this.name = "LimitExceededError";
+    Object.setPrototypeOf(this, LimitExceededError.prototype);
+  }
+}
+
 export class OpenRouterService {
   private readonly _apiKey: string;
   private readonly _baseUrl: string;
@@ -249,8 +274,9 @@ export class OpenRouterService {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage = errorData.error?.message || `API request failed with status ${response.status}`;
 
-          // Don't retry on 4xx errors (except 429 - rate limit)
-          if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          // Don't retry on 4xx errors (except 429 - rate limit, and 404 - model not available)
+          // 404 should be handled by fallback mechanism in AIService
+          if (response.status >= 400 && response.status < 500 && response.status !== 429 && response.status !== 404) {
             throw new OpenRouterError(errorMessage, response.status);
           }
 
@@ -263,6 +289,7 @@ export class OpenRouterService {
             continue;
           }
 
+          // For 404 and 5xx errors, throw to allow fallback mechanism to try next model
           throw new OpenRouterError(errorMessage, response.status);
         }
 
@@ -282,12 +309,13 @@ export class OpenRouterService {
           }
         }
 
-        // Non-retryable errors
+        // Non-retryable errors (but 404 and 429 are handled by fallback mechanism)
         if (
           error instanceof OpenRouterError &&
           error.statusCode &&
           error.statusCode < 500 &&
-          error.statusCode !== 429
+          error.statusCode !== 429 &&
+          error.statusCode !== 404
         ) {
           throw error;
         }

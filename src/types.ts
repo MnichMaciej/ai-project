@@ -48,13 +48,22 @@ export interface ProjectsListResponse {
 // Command model for AI generation request (file links as per API plan)
 export interface GenerateProjectAIRequest {
   fileLinks: string[]; // Array of raw GitHub URLs, max 8 as per plan
+  modelFallback?: boolean; // Optional flag to enable fallback mechanism (default: true)
 }
 
 // Response for AI generation (populates project fields, includes query count)
 export interface GenerateProjectAIResponse {
+  success: boolean;
   description: string;
   technologies: string[];
-  queryCount: number;
+  error?: string; // Error message if generation failed
+  queryCount: number; // Current query count after this operation
+}
+
+// Fallback model configuration for AI service
+export interface FallbackModelConfig {
+  default: string; // Default model ID
+  fallbacks: string[]; // Array of fallback model IDs in order
 }
 
 // Response for successful project deletion

@@ -204,6 +204,28 @@ Deweloperzy często pracują nad wieloma projektami jednocześnie, co prowadzi d
   3. Próba wysłania szóstego zapytania (np. przez API) jest blokowana przez serwer.
   4. Limity są również egzekwowane dla liczby plików (max 8) i rozmiaru pliku (max 100KB) - w przypadku przekroczenia użytkownik otrzymuje stosowny komunikat błędu przed wysłaniem zapytania.
 
+---
+
+- ID: US-012
+- Tytuł: Obsługa błędu domyślnego modelu AI poprzez fallback na alternatywny model
+- Opis: Jako użytkownik korzystający z funkcji AI, jeśli domyślny model zwróci błąd (np. niedostępność), chcę aby system automatycznie spróbował alternatywnego modelu, aby zwiększyć szanse na pomyślne wygenerowanie opisu i technologii.
+- Kryteria akceptacji:
+  1. Po błędzie domyślnego modelu (google/gemini-2.0-flash-exp:free), system sekwencyjnie próbuje modeli: deepseek/deepseek-chat-v3.1:free, openai/gpt-oss-20b:free.
+  2. Każda próba fallbacku jest logowana, ale nie zwiększa licznika zapytań AI, chyba że nastąpi sukces.
+  3. Jeśli fallback się powiedzie, pola formularza są wypełnione wygenerowaną treścią.
+  4. Użytkownik nie musi ręcznie interweniować; proces jest automatyczny z wskaźnikiem ładowania.
+
+---
+
+- ID: US-014
+- Tytuł: Obsługa wyczerpania wszystkich modeli fallback
+- Opis: Jako użytkownik, jeśli wszystkie modele fallback zawiodą, chcę otrzymać czytelny komunikat o tymczasowej niedostępności serwisu AI, bez utraty postępu w edycji projektu.
+- Kryteria akceptacji:
+  1. Po wyczerpaniu sekwencji modeli, wyświetlany jest komunikat błędu: "Serwis AI jest chwilowo niedostępny, spróbuj później."
+  2. Formularz edycji projektu pozostaje otwarty z możliwością ręcznego uzupełnienia pól.
+  3. Licznik zapytań AI nie jest zwiększany w przypadku niepowodzenia wszystkich prób.
+  4. Błąd jest logowany po stronie serwera dla monitoringu.
+
 ## 6. Metryki sukcesu
 
 Kryteria sukcesu dla wersji MVP będą mierzone okresowo za pomocą ręcznie uruchamianych zapytań SQL do bazy danych przez zespół projektowy.

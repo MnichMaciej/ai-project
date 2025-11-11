@@ -3,7 +3,12 @@ import { AIService } from "../../../../lib/ai.service";
 import { ProjectService } from "../../../../lib/project.service";
 import { generateProjectAISchema } from "../../../../lib/validators/project.validators";
 import type { GenerateProjectAIResponse } from "../../../../types";
-import { OpenRouterError, ValidationError } from "../../../../lib/openrouter.service";
+import {
+  OpenRouterError,
+  ValidationError,
+  FallbackExhaustedError,
+  LimitExceededError,
+} from "../../../../lib/openrouter.service";
 import { checkFeatureFlagDirectly, FeatureFlags } from "@/features";
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
@@ -12,49 +17,94 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   // Sprawdź flagę bezpośrednio z bazy (za każdym razem) - API zawsze sprawdza aktualną wartość
   const isAIEnabled = await checkFeatureFlagDirectly(locals.supabase, FeatureFlags.AI_GENERATION);
   if (!isAIEnabled) {
-    return new Response(JSON.stringify({ error: "AI generation not available" }), {
-      status: 503,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        description: "",
+        technologies: [],
+        error: "AI generation not available",
+        queryCount: 0,
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   try {
     // Check if user is authenticated
     if (!locals.user?.id) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Unauthorized",
+          queryCount: 0,
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const projectId = params.id;
     if (!projectId) {
-      return new Response(JSON.stringify({ error: "Project ID is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Project ID is required",
+          queryCount: 0,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON in request body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Invalid JSON in request body",
+          queryCount: 0,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const parseResult = generateProjectAISchema.safeParse(body);
     if (!parseResult.success) {
       const errors = parseResult.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`);
-      return new Response(JSON.stringify({ error: "Invalid request", details: errors }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: `Invalid request: ${errors.join(", ")}`,
+          queryCount: 0,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
-    const { fileLinks } = parseResult.data;
+    const { fileLinks, modelFallback = true } = parseResult.data;
 
     const projectService = new ProjectService(locals.supabase);
     const aiService = new AIService();
@@ -66,17 +116,35 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       project = projects.find((p) => p.id === projectId);
 
       if (!project) {
-        return new Response(JSON.stringify({ error: "Project not found" }), {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: "Project not found",
+            queryCount: 0,
+          }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } catch (error) {
       console.error("Error fetching project:", error);
-      return new Response(JSON.stringify({ error: "Failed to fetch project" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Failed to fetch project",
+          queryCount: 0,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
     try {
       const { count } = await locals.supabase
@@ -87,7 +155,13 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
       if (count !== null && count >= MAX_QUERIES_PER_PROJECT) {
         return new Response(
-          JSON.stringify({ error: `AI limit reached (${MAX_QUERIES_PER_PROJECT} queries per project)` }),
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: `AI limit reached (${MAX_QUERIES_PER_PROJECT} queries per project)`,
+            queryCount: count,
+          }),
           {
             status: 429,
             headers: { "Content-Type": "application/json" },
@@ -96,33 +170,61 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       }
     } catch (error) {
       console.error("Error checking query limit:", error);
-      return new Response(JSON.stringify({ error: "Failed to check query limit" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Failed to check query limit",
+          queryCount: 0,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
-    let filesContent: string[];
+    let aiResponse: { description: string; technologies: string[] };
     try {
-      filesContent = await aiService.fetchFilesFromGitHub(fileLinks);
-    } catch (error) {
-      console.error("Error fetching files:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      return new Response(JSON.stringify({ error: `Failed to fetch files: ${errorMessage}` }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    let aiResponse;
-    try {
-      aiResponse = await aiService.callOpenrouterAI(filesContent);
-      const parsedResponse = aiService.parseAIResponse(aiResponse);
-      aiResponse = parsedResponse;
+      // Use generateWithFallback instead of callOpenrouterAI
+      aiResponse = await aiService.generateWithFallback(fileLinks, projectId, modelFallback);
     } catch (error) {
       console.error("Error calling AI service:", error);
 
-      // Handle specific error types from OpenRouterService
+      // Handle specific error types
+      if (error instanceof FallbackExhaustedError) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: error.message,
+            queryCount: 0,
+          }),
+          {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (error instanceof LimitExceededError) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: error.message,
+            queryCount: 0,
+          }),
+          {
+            status: 429,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
       if (error instanceof OpenRouterError) {
         const statusCode = error.statusCode || 500;
         const errorMessage =
@@ -134,25 +236,52 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
                 ? "AI service is temporarily unavailable. Please try again later."
                 : error.message || "Failed to generate AI response";
 
-        return new Response(JSON.stringify({ error: errorMessage }), {
-          status: statusCode === 429 ? 429 : statusCode >= 500 ? 503 : 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: errorMessage,
+            queryCount: 0,
+          }),
+          {
+            status: statusCode === 429 ? 429 : statusCode >= 500 ? 503 : 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       if (error instanceof ValidationError) {
-        return new Response(JSON.stringify({ error: `Validation error: ${error.message}` }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: `Validation error: ${error.message}`,
+            queryCount: 0,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       // Generic error handling
       const errorMessage = error instanceof Error ? error.message : "Failed to generate AI response";
-      return new Response(JSON.stringify({ error: errorMessage }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: errorMessage,
+          queryCount: 0,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     let nextQueryNumber = 1;
@@ -185,17 +314,35 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
       if (insertError) {
         console.error("Database error inserting ai_query:", insertError);
-        return new Response(JSON.stringify({ error: "Failed to log AI query" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: "Failed to log AI query",
+            queryCount: 0,
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } catch (error) {
       console.error("Error inserting ai_query:", error);
-      return new Response(JSON.stringify({ error: "Failed to log AI query" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Failed to log AI query",
+          queryCount: 0,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     try {
@@ -212,18 +359,38 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       // Extract error code if it's a custom error
       if (error && typeof error === "object" && "code" in error) {
         const err = error as { code: number; message: string };
-        return new Response(JSON.stringify({ error: err.message }), {
-          status: err.code,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            description: "",
+            technologies: [],
+            error: err.message,
+            queryCount: 0,
+          }),
+          {
+            status: err.code,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
-      return new Response(JSON.stringify({ error: "Failed to update project" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Failed to update project",
+          queryCount: 0,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
+    // Success response
     const response: GenerateProjectAIResponse = {
+      success: true,
       description: aiResponse.description,
       technologies: aiResponse.technologies,
       queryCount: nextQueryNumber,
@@ -235,10 +402,19 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     });
   } catch (error) {
     console.error("Error in POST /api/projects/[id]/ai-generate:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        description: "",
+        technologies: [],
+        error: "Internal server error",
+        queryCount: 0,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 };
 

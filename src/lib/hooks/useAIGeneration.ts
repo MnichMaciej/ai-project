@@ -212,6 +212,22 @@ export function useAIGeneration({
         // Generate AI using service
         const data = await projectService.generateAI(projectId, request, requestId);
 
+        // Check if response indicates failure
+        if (!data.success) {
+          const errorMessage = data.error || "Nie udało się wygenerować danych z AI";
+          
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: errorMessage,
+            status: "error",
+            queryCount: data.queryCount || prev.queryCount,
+          }));
+
+          toast.error(errorMessage);
+          return;
+        }
+
         // Update form fields with AI-generated data
         form.setValue("description", data.description, { shouldValidate: true });
         form.setValue("technologies", data.technologies, { shouldValidate: true });

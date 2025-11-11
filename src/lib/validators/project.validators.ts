@@ -62,6 +62,7 @@ export const generateProjectAISchema = z.object({
     .array(z.string().url("Each item must be a valid URL"))
     .min(1, "At least one file link is required")
     .max(8, "Maximum 8 file links allowed"),
+  modelFallback: z.boolean().optional().default(true), // Optional flag to enable fallback mechanism
 });
 
 export type GenerateProjectAIInput = z.infer<typeof generateProjectAISchema>;
