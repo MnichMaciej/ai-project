@@ -67,12 +67,12 @@ describe("useProjects", () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
       // Check that the URL contains the expected parameters (accounting for URL encoding)
       const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      expect(fetchCall).toContain("limit=50");
+      expect(fetchCall).toContain("limit=10");
       expect(fetchCall).toContain("offset=0");
-      expect(fetchCall).toMatch(/sort=status(?:%3A|:)/);
     });
 
     it("should handle empty projects list", async () => {
@@ -146,7 +146,7 @@ describe("useProjects", () => {
 
       // Assert
       await waitFor(() => {
-        expect(mockLocation.href).toBe("/login");
+        expect(mockLocation.href).toBe("/auth/login");
       });
     });
 

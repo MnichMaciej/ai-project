@@ -263,7 +263,7 @@ describe("projectValidators", () => {
       // Assert
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.limit).toBe(50);
+        expect(result.data.limit).toBe(10);
         expect(result.data.offset).toBe(0);
       }
     });

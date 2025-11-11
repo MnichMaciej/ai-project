@@ -214,7 +214,17 @@ export function useAIGeneration({
 
         // Check if response indicates failure
         if (!data.success) {
-          const errorMessage = data.error || "Nie udało się wygenerować danych z AI";
+          let errorMessage = data.error || "Nie udało się wygenerować danych z AI";
+
+          // Translate common error messages
+          const errorLower = errorMessage.toLowerCase();
+          if (errorLower.includes("rate limit") || errorLower.includes("limit exceeded")) {
+            errorMessage = `Osiągnięto limit ${MAX_QUERIES} zapytań na projekt`;
+          } else if (errorLower.includes("unauthorized")) {
+            // Redirect to login for unauthorized errors
+            window.location.href = "/login";
+            return;
+          }
 
           setState((prev) => ({
             ...prev,

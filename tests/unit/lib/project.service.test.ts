@@ -53,14 +53,25 @@ describe("ProjectService", () => {
         },
       ];
 
-      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          range: vi.fn().mockResolvedValue({
-            data: mockProjects,
-            error: null,
-            count: 1,
-          }),
+      const mockRange = vi.fn().mockResolvedValue({
+        data: mockProjects,
+        error: null,
+        count: 1,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockEq = vi.fn().mockReturnValue({
+        order: mockOrder,
+        or: vi.fn().mockReturnValue({
+          order: mockOrder,
         }),
+      });
+
+      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
+        eq: mockEq,
       });
 
       // Act
@@ -77,16 +88,25 @@ describe("ProjectService", () => {
       const userId = "user-123";
       const options = { limit: 10, offset: 5, sort: "status:asc" as const };
 
-      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          range: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: [],
-              error: null,
-              count: 0,
-            }),
-          }),
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+        count: 0,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockEq = vi.fn().mockReturnValue({
+        order: mockOrder,
+        or: vi.fn().mockReturnValue({
+          order: mockOrder,
         }),
+      });
+
+      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
+        eq: mockEq,
       });
 
       // Act
@@ -100,14 +120,25 @@ describe("ProjectService", () => {
       // Arrange
       const userId = "user-123";
 
-      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          range: vi.fn().mockResolvedValue({
-            data: null,
-            error: { message: "Database error" },
-            count: null,
-          }),
+      const mockRange = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: "Database error" },
+        count: null,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockEq = vi.fn().mockReturnValue({
+        order: mockOrder,
+        or: vi.fn().mockReturnValue({
+          order: mockOrder,
         }),
+      });
+
+      (mockQuery.select as ReturnType<typeof vi.fn>).mockReturnValue({
+        eq: mockEq,
       });
 
       // Act & Assert
