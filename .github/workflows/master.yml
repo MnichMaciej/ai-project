@@ -185,7 +185,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [setup, build]
+    needs: [setup, build, test-unit, test-e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
