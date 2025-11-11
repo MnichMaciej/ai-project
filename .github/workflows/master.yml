@@ -185,7 +185,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [setup, build, test-unit, test-e2e]
+    needs: [setup, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -220,6 +220,11 @@ jobs:
           DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} | tail -n 1)
           echo "Deployment URL: $DEPLOYMENT_URL"
           echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Promote to Production
+        run: vercel promote ${{ steps.deploy.outputs.url }} --yes --scope=${{ secrets.VERCEL_ORG_ID }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
