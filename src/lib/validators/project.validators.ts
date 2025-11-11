@@ -2,9 +2,27 @@ import { z } from "zod";
 import { ProjectStatus } from "../../types";
 
 export const projectsQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   offset: z.coerce.number().int().min(0).optional().default(0),
-  sort: z.enum(["status:asc", "status:desc"]).optional(),
+  sort: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined || val === "") {
+        return undefined;
+      }
+      return String(val);
+    },
+    z.enum(["status:asc", "status:desc"]).optional()
+  ),
+  search: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined || val === "") {
+        return undefined;
+      }
+      const str = String(val).trim();
+      return str === "" ? undefined : str;
+    },
+    z.string().optional()
+  ),
 });
 
 export type ProjectsQueryParams = z.infer<typeof projectsQuerySchema>;

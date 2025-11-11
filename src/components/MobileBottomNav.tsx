@@ -132,11 +132,11 @@ export function MobileBottomNav({
                   <SheetHeader>
                     <SheetTitle>Wyszukaj projekty</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-4">
+                  <div className="mt-4 px-3">
                     <Input
                       id="mobile-search-input"
                       type="text"
-                      placeholder="Wpisz nazwę projektu..."
+                      placeholder="Szukaj po nazwie lub technologii..."
                       value={searchValue || ""}
                       onChange={handleSearchChangeInternal}
                       className="w-full"

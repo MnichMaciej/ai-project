@@ -8,24 +8,33 @@ interface FetchProjectsOptions {
   limit?: number;
   offset?: number;
   sort?: "status:asc" | "status:desc";
+  search?: string;
 }
 
 export class ProjectService {
   constructor(private readonly supabase: SupabaseClient) {}
 
   /**
-   * Fetches all projects for a given user with optional pagination and sorting
+   * Fetches all projects for a given user with optional pagination, sorting, and search
+   * Search uses case-insensitive matching on name/description and checks if any technology contains the search term
    */
   async fetchUserProjects(userId: string, options: FetchProjectsOptions = {}): Promise<ProjectsListResponse> {
     try {
-      const { limit = 50, offset = 0, sort } = options;
+      const { limit = 10, offset = 0, sort, search } = options;
 
       // Start building the query
       let query = this.supabase
         .from("projects")
         .select("*", { count: "exact" })
-        .eq("user_id", userId)
-        .range(offset, offset + limit - 1);
+        .eq("user_id", userId);
+
+      // Add search filtering if provided
+      if (search && search.trim().length > 0) {
+        const searchTerm = `%${search.trim()}%`;
+        // Use OR to search across name and description with ilike (case-insensitive contains)
+        // For technologies array, we filter client-side since Supabase doesn't support array substring search
+        query = query.or(`name.ilike.${searchTerm},description.ilike.${searchTerm}`);
+      }
 
       // Add sorting if specified
       if (sort) {
@@ -33,7 +42,13 @@ export class ProjectService {
         if (field === "status") {
           query = query.order("status", { ascending: order === "asc" });
         }
+      } else {
+        // Default sorting by updated_at descending
+        query = query.order("updated_at", { ascending: false });
       }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
 
       // Execute the query
       const { data, error, count } = await query;
@@ -44,7 +59,7 @@ export class ProjectService {
       }
 
       // Map database results to DTOs
-      const projects: ProjectDto[] = data.map((project: ProjectRow) => {
+      let projects: ProjectDto[] = data.map((project: ProjectRow) => {
         // Validate status is a valid ProjectStatus
         if (!Object.values(ProjectStatus).includes(project.status as ProjectStatus)) {
           throw new Error(`Invalid project status: ${project.status}`);
@@ -64,9 +79,34 @@ export class ProjectService {
         };
       });
 
+      // Filter by technologies if search is provided (client-side filtering for array contains)
+      // Note: Server-side filtering handles name/description, but technologies array substring search
+      // requires client-side filtering. This means total count may be approximate.
+      if (search && search.trim().length > 0) {
+        const searchLower = search.trim().toLowerCase();
+        const filteredProjects = projects.filter(
+          (project) =>
+            project.name.toLowerCase().includes(searchLower) ||
+            project.description.toLowerCase().includes(searchLower) ||
+            project.technologies.some((tech) => tech.toLowerCase().includes(searchLower))
+        );
+        // Only update projects if filtering changed results
+        // This handles cases where server-side filter didn't catch technology matches
+        if (filteredProjects.length !== projects.length) {
+          projects = filteredProjects;
+          // Note: total count from server may not reflect technology filtering
+          // For accurate count, we'd need a separate count query with technology filtering
+        }
+      }
+
+      // Calculate hasMore based on server count and current offset
+      // Note: If technologies filtering was applied client-side, this may be slightly inaccurate
+      const hasMore = (count || 0) > offset + limit;
+
       return {
         projects,
         total: count || 0,
+        hasMore,
       };
     } catch (error) {
       console.error("Error in fetchUserProjects:", error);

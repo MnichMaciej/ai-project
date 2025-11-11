@@ -20,13 +20,21 @@ export const GET: APIRoute = async ({ request, locals }) => {
       limit: url.searchParams.get("limit"),
       offset: url.searchParams.get("offset"),
       sort: url.searchParams.get("sort"),
+      search: url.searchParams.get("search"),
     });
 
     if (!queryResult.success) {
-      return new Response(JSON.stringify({ error: "Invalid query parameters" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      console.error("Query validation errors:", queryResult.error.errors);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid query parameters",
+          details: queryResult.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`),
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Initialize service and fetch projects

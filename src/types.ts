@@ -42,6 +42,7 @@ export type UpdateProjectDto = Partial<CreateProjectDto>;
 export interface ProjectsListResponse {
   projects: ProjectDto[];
   total: number;
+  hasMore?: boolean;
 }
 
 // Command model for AI generation request (file links as per API plan)
