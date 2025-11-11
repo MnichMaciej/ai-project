@@ -181,11 +181,96 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
-  deploy:
-    name: Deploy to Vercel
+  deploy-preview:
+    name: Deploy Preview to Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [setup, build, test-unit, test-e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      id: ${{ steps.deploy.outputs.id }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Vercel output artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: vercel-output
+          path: .vercel/output/
+
+      - name: Download Vercel config artifacts
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          name: vercel-config
+          path: .vercel/
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        run: |
+          # Deploy and capture JSON output
+          DEPLOY_OUTPUT=$(vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes --json)
+
+          # Extract URL and deployment ID from JSON output
+          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | grep -o '"url":"[^"]*' | head -1 | cut -d'"' -f4)
+          DEPLOYMENT_ID=$(echo "$DEPLOY_OUTPUT" | grep -o '"deploymentId":"[^"]*' | head -1 | cut -d'"' -f4)
+
+          # Fallback: try parsing from URL if JSON parsing fails
+          if [ -z "$DEPLOYMENT_ID" ] && [ -n "$DEPLOYMENT_URL" ]; then
+            # Extract deployment ID from URL format: https://project-name-{id}.vercel.app
+            if [[ "$DEPLOYMENT_URL" =~ https://[^-]+-([a-z0-9]+)\.vercel\.app ]]; then
+              DEPLOYMENT_ID="${BASH_REMATCH[1]}"
+            fi
+          fi
+
+          # Final fallback: get latest deployment from Vercel API
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            DEPLOYMENT_ID=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --limit=1 --format=json 2>/dev/null | grep -o '"uid":"[^"]*' | head -1 | cut -d'"' -f4 || echo "")
+          fi
+
+          echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+
+          echo "Preview deployment URL: $DEPLOYMENT_URL"
+          echo "Deployment ID: $DEPLOYMENT_ID"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Output deployment URL
+        run: |
+          echo "Preview deployment available at: ${{ steps.deploy.outputs.url }}"
+
+  promote:
+    name: Promote to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy-preview
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -214,8 +299,42 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Deploy to Vercel
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Get deployment information
+        id: get-deployment
+        run: |
+          # Get deployment info from previous job
+          DEPLOYMENT_URL="${{ needs.deploy-preview.outputs.url }}"
+          DEPLOYMENT_ID="${{ needs.deploy-preview.outputs.id }}"
+
+          # If deployment ID wasn't captured, try to get it from URL or API
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            if [[ "$DEPLOYMENT_URL" =~ https://[^-]+-([a-z0-9]+)\.vercel\.app ]]; then
+              DEPLOYMENT_ID="${BASH_REMATCH[1]}"
+            else
+              # Get latest deployment from Vercel
+              DEPLOYMENT_ID=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --limit=1 --format=json 2>/dev/null | grep -o '"uid":"[^"]*' | head -1 | cut -d'"' -f4 || echo "")
+            fi
+          fi
+
+          echo "id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          echo "Deployment URL: $DEPLOYMENT_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Promote deployment to production
+        run: |
+          DEPLOYMENT_ID="${{ steps.get-deployment.outputs.id }}"
+
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "⚠️ Could not extract deployment ID, falling back to direct production deploy"
+            vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          else
+            echo "🚀 Promoting deployment $DEPLOYMENT_ID to production"
+            vercel promote $DEPLOYMENT_ID --token=${{ secrets.VERCEL_TOKEN }} --yes
+          fi
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -224,7 +343,7 @@ jobs:
     name: CI/CD Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [setup, build, test-unit, test-e2e, deploy]
+    needs: [setup, build, test-unit, test-e2e, deploy-preview, promote]
     if: always()
 
     steps:
@@ -239,10 +358,16 @@ jobs:
             echo "❌ CI/CD Pipeline failed"
             exit 1
           fi
-          DEPLOY_RESULT="${{ needs.deploy.result }}"
-          if [ "$DEPLOY_RESULT" != "skipped" ] && [ "$DEPLOY_RESULT" == "failure" ]; then
+          DEPLOY_PREVIEW_RESULT="${{ needs.deploy-preview.result }}"
+          PROMOTE_RESULT="${{ needs.promote.result }}"
+          if [ "$DEPLOY_PREVIEW_RESULT" != "skipped" ] && [ "$DEPLOY_PREVIEW_RESULT" == "failure" ]; then
             echo "status=failure" >> $GITHUB_OUTPUT
-            echo "❌ CI/CD Pipeline failed (deployment failed)"
+            echo "❌ CI/CD Pipeline failed (preview deployment failed)"
+            exit 1
+          fi
+          if [ "$PROMOTE_RESULT" != "skipped" ] && [ "$PROMOTE_RESULT" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ CI/CD Pipeline failed (promotion to production failed)"
             exit 1
           fi
           echo "status=success" >> $GITHUB_OUTPUT
