@@ -13,16 +13,13 @@ export const projectsQuerySchema = z.object({
     },
     z.enum(["status:asc", "status:desc"]).optional()
   ),
-  search: z.preprocess(
-    (val) => {
-      if (val === null || val === undefined || val === "") {
-        return undefined;
-      }
-      const str = String(val).trim();
-      return str === "" ? undefined : str;
-    },
-    z.string().optional()
-  ),
+  search: z.preprocess((val) => {
+    if (val === null || val === undefined || val === "") {
+      return undefined;
+    }
+    const str = String(val).trim();
+    return str === "" ? undefined : str;
+  }, z.string().optional()),
 });
 
 export type ProjectsQueryParams = z.infer<typeof projectsQuerySchema>;

@@ -23,10 +23,7 @@ export class ProjectService {
       const { limit = 10, offset = 0, sort, search } = options;
 
       // Start building the query
-      let query = this.supabase
-        .from("projects")
-        .select("*", { count: "exact" })
-        .eq("user_id", userId);
+      let query = this.supabase.from("projects").select("*", { count: "exact" }).eq("user_id", userId);
 
       // Add search filtering if provided
       if (search && search.trim().length > 0) {

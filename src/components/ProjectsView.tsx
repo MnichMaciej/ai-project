@@ -17,55 +17,55 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
  */
 export function ProjectsView() {
   const limit = 10; // Default page size
-  
+
   // Search state with debounce
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   // Offset state - initialized from URL
   const [offset, setOffset] = useState<number>(0);
-  
+
   // Error state for load more
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
-  
+
   // Initialize from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlSearch = params.get("search") || "";
     const urlOffset = parseInt(params.get("offset") || "0", 10);
-    
+
     setSearchQuery(urlSearch);
     setDebouncedSearchQuery(urlSearch);
     setOffset(urlOffset);
   }, []);
-  
+
   // Update URL params when search or offset changes
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    
+
     if (debouncedSearchQuery.trim()) {
       params.set("search", debouncedSearchQuery.trim());
     } else {
       params.delete("search");
     }
-    
+
     if (offset > 0) {
       params.set("offset", offset.toString());
     } else {
       params.delete("offset");
     }
-    
+
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
     window.history.replaceState({}, "", newUrl);
   }, [debouncedSearchQuery, offset]);
-  
+
   // Debounce search query (400ms delay)
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       const prevSearch = debouncedSearchQuery;
       setDebouncedSearchQuery(searchQuery);
@@ -75,7 +75,7 @@ export function ProjectsView() {
         setLoadMoreError(null);
       }
     }, 400);
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -84,14 +84,23 @@ export function ProjectsView() {
   }, [searchQuery, debouncedSearchQuery]);
 
   // Use projects hook with pagination parameters
-  const { projects, loading, error, total, hasMore, loadingMore, refetch, loadMore: loadMoreProjects } = useProjects({
+  const {
+    projects,
+    loading,
+    error,
+    total,
+    hasMore,
+    loadingMore,
+    refetch,
+    loadMore: loadMoreProjects,
+  } = useProjects({
     limit,
     offset,
     search: debouncedSearchQuery.trim().length > 0 ? debouncedSearchQuery.trim() : undefined,
   });
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
+
   // Ref for last item in list (for infinite scroll)
   const lastItemRef = useRef<HTMLDivElement>(null);
 
@@ -104,15 +113,15 @@ export function ProjectsView() {
     // Navigate to edit project page
     window.location.href = `/projects/${id}/edit`;
   }, []);
-  
+
   // Handle loading more projects (infinite scroll)
   const handleLoadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loadMoreError) {
       return;
     }
-    
+
     setLoadMoreError(null);
-    
+
     try {
       await loadMoreProjects();
       // Hook manages offset internally, but we update URL offset for bookmarking
@@ -123,57 +132,60 @@ export function ProjectsView() {
       toast.error(errorMessage);
     }
   }, [loadingMore, hasMore, loadMoreError, loadMoreProjects, limit]);
-  
+
   // Handle retry load more
   const handleRetryLoadMore = useCallback(() => {
     setLoadMoreError(null);
     handleLoadMore();
   }, [handleLoadMore]);
-  
+
   // Handle search change
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (deletingId) return; // Prevent multiple delete operations
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (deletingId) return; // Prevent multiple delete operations
 
-    setDeletingId(id);
+      setDeletingId(id);
 
-    try {
-      const response = await fetch(`/api/projects/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      try {
+        const response = await fetch(`/api/projects/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/auth/login";
-          return;
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.href = "/auth/login";
+            return;
+          }
+          throw new Error("Nie udało się usunąć projektu");
         }
-        throw new Error("Nie udało się usunąć projektu");
-      }
 
-      // Show success toast
-      toast.success("Projekt został pomyślnie usunięty");
+        // Show success toast
+        toast.success("Projekt został pomyślnie usunięty");
 
-      // Refetch projects after successful deletion
-      await refetch();
-      
-      // Adjust offset if current page becomes empty
-      if (projects.length === 1 && offset > 0) {
-        setOffset((prev) => Math.max(0, prev - limit));
+        // Refetch projects after successful deletion
+        await refetch();
+
+        // Adjust offset if current page becomes empty
+        if (projects.length === 1 && offset > 0) {
+          setOffset((prev) => Math.max(0, prev - limit));
+        }
+      } catch (error) {
+        console.error("Error deleting project:", error);
+        toast.error("Nie udało się usunąć projektu. Spróbuj ponownie.");
+      } finally {
+        setDeletingId(null);
       }
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      toast.error("Nie udało się usunąć projektu. Spróbuj ponownie.");
-    } finally {
-      setDeletingId(null);
-    }
-  }, [deletingId, refetch, projects.length, offset, limit]);
+    },
+    [deletingId, refetch, projects.length, offset, limit]
+  );
 
   // Loading state
   if (loading && projects.length === 0) {
@@ -239,7 +251,10 @@ export function ProjectsView() {
           <div className="flex items-center gap-3">
             {/* Desktop search input */}
             <div className="hidden md:flex relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden="true" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               <Input
                 type="text"
                 placeholder="Szukaj po nazwie lub technologii..."
@@ -274,21 +289,16 @@ export function ProjectsView() {
         )}
 
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <ProjectsList 
-            projects={projects} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-            lastItemRef={lastItemRef}
-          />
+          <ProjectsList projects={projects} onEdit={handleEdit} onDelete={handleDelete} lastItemRef={lastItemRef} />
         </div>
-        
+
         {/* Loading more indicator */}
         {loadingMore && (
           <div className="mt-4">
             <SkeletonGridMore count={3} />
           </div>
         )}
-        
+
         {/* Load more error with retry */}
         {loadMoreError && !loadingMore && (
           <div className="mt-4 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md flex flex-col items-center gap-3">
@@ -301,14 +311,10 @@ export function ProjectsView() {
             </Button>
           </div>
         )}
-        
+
         {/* Infinite scroll trigger */}
         {!loading && projects.length > 0 && !loadMoreError && (
-          <InfiniteScrollTrigger
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-          />
+          <InfiniteScrollTrigger onLoadMore={handleLoadMore} hasMore={hasMore} loadingMore={loadingMore} />
         )}
       </div>
       <MobileBottomNav searchValue={searchQuery} onSearchChange={handleSearchChange} />

@@ -37,6 +37,8 @@ const createMockForm = () => {
 
   const setValueFn = vi.fn((field: string, value: unknown) => {
     (formState as Record<string, unknown>)[field] = value;
+    // Return a promise to simulate async behavior
+    return Promise.resolve();
   });
 
   const getValuesFn = vi.fn((field?: string) => {
@@ -210,6 +212,7 @@ describe("useAIGeneration", () => {
       );
 
       const mockResponse = {
+        success: true,
         description: "AI generated description",
         technologies: ["React", "TypeScript"],
         queryCount: 1,
@@ -254,7 +257,13 @@ describe("useAIGeneration", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 429,
-        json: async () => ({ error: "Rate limit exceeded" }),
+        json: async () => ({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Rate limit exceeded",
+          queryCount: 0,
+        }),
       });
 
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
@@ -281,7 +290,13 @@ describe("useAIGeneration", () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 401,
-        json: async () => ({ error: "Unauthorized" }),
+        json: async () => ({
+          success: false,
+          description: "",
+          technologies: [],
+          error: "Unauthorized",
+          queryCount: 0,
+        }),
       });
 
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
@@ -330,6 +345,7 @@ describe("useAIGeneration", () => {
       resolveFetch({
         ok: true,
         json: async () => ({
+          success: true,
           description: "Test",
           technologies: ["React"],
           queryCount: 1,
@@ -384,6 +400,7 @@ describe("useAIGeneration", () => {
       );
 
       const mockResponse = {
+        success: true,
         description: "Updated description",
         technologies: ["Vue", "Nuxt"],
         queryCount: 1,
