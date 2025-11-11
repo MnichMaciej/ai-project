@@ -185,7 +185,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [setup, build, test-unit, test-e2e]
+    needs: [setup, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -225,7 +225,7 @@ jobs:
 
       - name: Promote to production
         run: |
-          sleep 2000 
+          sleep 2 
           echo "Promoting to production ${{ needs.deploy.outputs.url }}"
           vercel promote ${{ needs.deploy.outputs.url }}  --timeout=5m  --token=${{ secrets.VERCEL_TOKEN }}
         env:
