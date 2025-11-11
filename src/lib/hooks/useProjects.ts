@@ -36,7 +36,7 @@ interface ProjectsListResponse {
  */
 export function useProjects(options: UseProjectsOptions = {}): UseProjectsReturn {
   const { limit = 10, offset: initialOffset = 0, search, sort } = options;
-  
+
   const [state, setState] = useState<ProjectsViewState>({
     loading: true,
     projects: [],
@@ -44,89 +44,93 @@ export function useProjects(options: UseProjectsOptions = {}): UseProjectsReturn
     total: 0,
     hasMore: false,
   });
-  
+
   const [currentOffset, setCurrentOffset] = useState<number>(initialOffset);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
-  const fetchProjects = useCallback(async (offset: number, append: boolean = false) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-    }
-
-    try {
-      // Build URL with query parameters
-      const url = new URL("/api/projects", window.location.origin);
-      url.searchParams.set("limit", limit.toString());
-      url.searchParams.set("offset", offset.toString());
-      if (search && search.trim().length > 0) {
-        url.searchParams.set("search", search.trim());
-      }
-      if (sort) {
-        url.searchParams.set("sort", sort);
+  const fetchProjects = useCallback(
+    async (offset: number, append = false) => {
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setState((prev) => ({ ...prev, loading: true, error: null }));
       }
 
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      try {
+        // Build URL with query parameters
+        const url = new URL("/api/projects", window.location.origin);
+        url.searchParams.set("limit", limit.toString());
+        url.searchParams.set("offset", offset.toString());
+        if (search && search.trim().length > 0) {
+          url.searchParams.set("search", search.trim());
+        }
+        if (sort) {
+          url.searchParams.set("sort", sort);
+        }
 
-      if (!response.ok) {
-        // Handle different error codes
-        if (response.status === 401) {
-          // Redirect to login for unauthorized users
-          window.location.href = "/auth/login";
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          // Handle different error codes
+          if (response.status === 401) {
+            // Redirect to login for unauthorized users
+            window.location.href = "/auth/login";
+            return;
+          }
+
+          const errorMessage =
+            response.status === 500 ? "Błąd serwera, spróbuj ponownie" : "Nie udało się pobrać projektów";
+
+          // Throw error for loadMore, set state for initial load
+          if (append) {
+            throw new Error(errorMessage);
+          }
+
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error: errorMessage,
+          }));
           return;
         }
 
-        const errorMessage = response.status === 500 ? "Błąd serwera, spróbuj ponownie" : "Nie udało się pobrać projektów";
-        
-        // Throw error for loadMore, set state for initial load
+        const data: ProjectsListResponse = await response.json();
+
+        setState((prev) => ({
+          loading: false,
+          projects: append ? [...prev.projects, ...(data.projects || [])] : data.projects || [],
+          error: null,
+          total: data.total || 0,
+          hasMore: data.hasMore ?? false,
+        }));
+
+        setCurrentOffset(offset);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+
+        // For loadMore, re-throw the error
         if (append) {
-          throw new Error(errorMessage);
+          throw error;
         }
-        
+
+        // Handle network errors or other exceptions for initial load
         setState((prev) => ({
           ...prev,
           loading: false,
-          error: errorMessage,
+          error: error instanceof Error ? error.message : "Nie udało się pobrać projektów",
         }));
-        return;
+      } finally {
+        setLoadingMore(false);
       }
-
-      const data: ProjectsListResponse = await response.json();
-
-      setState((prev) => ({
-        loading: false,
-        projects: append ? [...prev.projects, ...(data.projects || [])] : data.projects || [],
-        error: null,
-        total: data.total || 0,
-        hasMore: data.hasMore ?? false,
-      }));
-      
-      setCurrentOffset(offset);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-
-      // For loadMore, re-throw the error
-      if (append) {
-        throw error;
-      }
-
-      // Handle network errors or other exceptions for initial load
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : "Nie udało się pobrać projektów",
-      }));
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [limit, search, sort]);
+    },
+    [limit, search, sort]
+  );
 
   // Fetch projects on component mount or when options change
   useEffect(() => {

@@ -48,9 +48,14 @@ export function parseApiError(response: Response, errorData: unknown, defaultMes
   const errorResponse = errorData as AuthErrorResponseDto & { details?: string[]; success?: boolean };
 
   // Handle GenerateProjectAIResponse format (success: false, error: string)
-  if (errorResponse && typeof errorResponse === "object" && "success" in errorResponse && errorResponse.success === false) {
+  if (
+    errorResponse &&
+    typeof errorResponse === "object" &&
+    "success" in errorResponse &&
+    errorResponse.success === false
+  ) {
     const message = errorResponse.error || defaultMessage;
-    
+
     // Determine error type based on status code
     let errorType: ErrorType;
     if (statusCode === 401) {

@@ -55,4 +55,3 @@ export function InfiniteScrollTrigger({ onLoadMore, hasMore, loadingMore }: Infi
     />
   );
 }
-

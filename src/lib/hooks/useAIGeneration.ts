@@ -215,7 +215,7 @@ export function useAIGeneration({
         // Check if response indicates failure
         if (!data.success) {
           const errorMessage = data.error || "Nie udało się wygenerować danych z AI";
-          
+
           setState((prev) => ({
             ...prev,
             isLoading: false,

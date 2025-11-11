@@ -202,7 +202,7 @@ export class ProjectService {
       });
 
       // Parse response (even if status is not OK, we need to check success field)
-      const data = await response.json() as GenerateProjectAIResponse;
+      const data = (await response.json()) as GenerateProjectAIResponse;
 
       // If response has success: false, return it (hook will handle the error)
       if (!data.success) {
