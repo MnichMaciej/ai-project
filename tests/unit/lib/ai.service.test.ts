@@ -48,6 +48,9 @@ describe("AIService", () => {
   let aiService: AIService;
 
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
     // Reset mocks but keep the instance
     mockOpenRouterInstance.generateResponse.mockClear();
     vi.clearAllMocks();

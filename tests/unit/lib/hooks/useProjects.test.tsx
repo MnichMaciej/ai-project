@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { ProjectStatus } from "@/types";
 
@@ -18,6 +18,9 @@ global.fetch = vi.fn();
 
 describe("useProjects", () => {
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
     vi.clearAllMocks();
     mockLocation.href = "";
   });
@@ -187,7 +190,9 @@ describe("useProjects", () => {
       vi.clearAllMocks();
 
       // Refetch
-      await result.current.refetch();
+      await act(async () => {
+        await result.current.refetch();
+      });
 
       // Assert
       expect(global.fetch).toHaveBeenCalledTimes(1);

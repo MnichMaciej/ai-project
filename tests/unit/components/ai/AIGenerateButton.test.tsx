@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "../../../helpers/react-testing-helpers";
+import { render, screen, act, waitFor } from "../../../helpers/react-testing-helpers";
 import { AIGenerateButton } from "@/components/ai/AIGenerateButton";
 import userEvent from "@testing-library/user-event";
 
@@ -60,9 +60,11 @@ describe("AIGenerateButton", () => {
       await user.hover(button);
 
       // Assert - wait for tooltip to appear, use getAllByText and check first one
-      const tooltips = await screen.findAllByText(/osiągnięto limit.*5.*zapytań/i);
-      expect(tooltips.length).toBeGreaterThan(0);
-      expect(tooltips[0]).toBeInTheDocument();
+      await waitFor(async () => {
+        const tooltips = await screen.findAllByText(/osiągnięto limit.*5.*zapytań/i);
+        expect(tooltips.length).toBeGreaterThan(0);
+        expect(tooltips[0]).toBeInTheDocument();
+      }, { timeout: 3000 });
     });
 
     it("should not show tooltip when not disabled", async () => {
@@ -117,7 +119,9 @@ describe("AIGenerateButton", () => {
 
       // Act
       const button = screen.getByRole("button");
-      button.focus();
+      act(() => {
+        button.focus();
+      });
       await user.keyboard("{Enter}");
 
       // Assert

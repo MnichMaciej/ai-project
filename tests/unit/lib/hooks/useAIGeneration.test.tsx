@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useAIGeneration } from "@/lib/hooks/useAIGeneration";
 import { toast } from "sonner";
 import type { CreateProjectFormData } from "@/lib/hooks/useProjectForm";
@@ -86,6 +86,9 @@ describe("useAIGeneration", () => {
   let mockForm: ReturnType<typeof createMockForm>;
 
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
     vi.clearAllMocks();
     mockLocation.href = "";
 
@@ -248,7 +251,9 @@ describe("useAIGeneration", () => {
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
 
       // Act
-      await result.current.generateAI(fileLinks);
+      await act(async () => {
+        await result.current.generateAI(fileLinks);
+      });
 
       // Assert
       await waitFor(() => {
@@ -291,7 +296,9 @@ describe("useAIGeneration", () => {
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
 
       // Act
-      await result.current.generateAI(fileLinks);
+      await act(async () => {
+        await result.current.generateAI(fileLinks);
+      });
 
       // Assert
       await waitFor(() => {
@@ -324,7 +331,9 @@ describe("useAIGeneration", () => {
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
 
       // Act
-      await result.current.generateAI(fileLinks);
+      await act(async () => {
+        await result.current.generateAI(fileLinks);
+      });
 
       // Assert
       await waitFor(() => {
@@ -355,7 +364,10 @@ describe("useAIGeneration", () => {
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
 
       // Act
-      const generatePromise = result.current.generateAI(fileLinks);
+      let generatePromise: Promise<void>;
+      await act(async () => {
+        generatePromise = result.current.generateAI(fileLinks);
+      });
 
       // Assert
       await waitFor(() => {
@@ -364,17 +376,18 @@ describe("useAIGeneration", () => {
       });
 
       // Resolve fetch
-      resolveFetch({
-        ok: true,
-        json: async () => ({
-          success: true,
-          description: "Test",
-          technologies: ["React"],
-          queryCount: 1,
-        }),
-      } as Response);
-
-      await generatePromise;
+      await act(async () => {
+        resolveFetch({
+          ok: true,
+          json: async () => ({
+            success: true,
+            description: "Test",
+            technologies: ["React"],
+            queryCount: 1,
+          }),
+        } as Response);
+        await generatePromise!;
+      });
 
       await waitFor(() => {
         expect(result.current.state.isLoading).toBe(false);
@@ -397,10 +410,14 @@ describe("useAIGeneration", () => {
       });
 
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
-      result.current.generateAI(fileLinks);
+      await act(async () => {
+        result.current.generateAI(fileLinks);
+      });
 
       // Act
-      result.current.closeInput();
+      await act(async () => {
+        result.current.closeInput();
+      });
 
       // Assert
       await waitFor(() => {
@@ -436,7 +453,9 @@ describe("useAIGeneration", () => {
       const fileLinks = ["https://raw.githubusercontent.com/user/repo/main/file.ts"];
 
       // Act
-      await result.current.generateAI(fileLinks);
+      await act(async () => {
+        await result.current.generateAI(fileLinks);
+      });
 
       // Assert
       await waitFor(() => {

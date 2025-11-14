@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "../../../helpers/react-testing-helpers";
+import { render, screen, waitFor, act } from "../../../helpers/react-testing-helpers";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useForm } from "react-hook-form";
 import userEvent from "@testing-library/user-event";
@@ -24,6 +24,9 @@ describe("LoginForm", () => {
   let mockOnSubmit: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
     vi.clearAllMocks();
 
     mockOnSubmit = vi.fn().mockResolvedValue(undefined);
@@ -62,13 +65,17 @@ describe("LoginForm", () => {
       const { rerender } = render(<LoginForm />);
 
       // Set error after initial render to trigger re-render
-      mockForm.setError("email", {
-        type: "required",
-        message: "Adres e-mail jest wymagany",
+      await act(async () => {
+        mockForm.setError("email", {
+          type: "required",
+          message: "Adres e-mail jest wymagany",
+        });
       });
 
       // Force re-render to show error
-      rerender(<LoginForm />);
+      await act(async () => {
+        rerender(<LoginForm />);
+      });
 
       // Assert
       await screen.findByText("Adres e-mail jest wymagany");
@@ -79,13 +86,17 @@ describe("LoginForm", () => {
       const { rerender } = render(<LoginForm />);
 
       // Set error after initial render to trigger re-render
-      mockForm.setError("password", {
-        type: "required",
-        message: "Hasło jest wymagane",
+      await act(async () => {
+        mockForm.setError("password", {
+          type: "required",
+          message: "Hasło jest wymagane",
+        });
       });
 
       // Force re-render to show error
-      rerender(<LoginForm />);
+      await act(async () => {
+        rerender(<LoginForm />);
+      });
 
       // Assert
       await screen.findByText("Hasło jest wymagane");

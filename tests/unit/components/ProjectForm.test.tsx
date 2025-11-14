@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "../../helpers/react-testing-helpers";
+import { render, screen, waitFor, act } from "../../helpers/react-testing-helpers";
 import { ProjectForm } from "@/components/ProjectForm";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +41,9 @@ describe("ProjectForm", () => {
   let mockOnCancel: () => void;
 
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
     vi.clearAllMocks();
 
     mockOnSubmit = vi.fn().mockResolvedValue(undefined) as (data: ProjectFormData) => Promise<void>;
@@ -124,21 +127,25 @@ describe("ProjectForm", () => {
       );
 
       // Set error after initial render to trigger re-render
-      mockForm.setError("name", {
-        type: "required",
-        message: "Nazwa projektu jest wymagana",
+      await act(async () => {
+        mockForm.setError("name", {
+          type: "required",
+          message: "Nazwa projektu jest wymagana",
+        });
       });
 
       // Force re-render to show error
-      rerender(
-        <ProjectForm
-          form={mockFormAsProjectFormData}
-          onSubmit={mockOnSubmit}
-          isSubmitting={false}
-          onCancel={mockOnCancel}
-          mode="create"
-        />
-      );
+      await act(async () => {
+        rerender(
+          <ProjectForm
+            form={mockFormAsProjectFormData}
+            onSubmit={mockOnSubmit}
+            isSubmitting={false}
+            onCancel={mockOnCancel}
+            mode="create"
+          />
+        );
+      });
 
       // Assert
       await screen.findByText("Nazwa projektu jest wymagana");
@@ -173,19 +180,24 @@ describe("ProjectForm", () => {
       // Note: Status is already set to PLANNING in defaultValues
 
       // Explicitly trigger validation to ensure form state is updated
-      const isValid = await mockForm.trigger();
+      let isValid = false;
+      await act(async () => {
+        isValid = await mockForm.trigger();
+      });
       expect(isValid).toBe(true);
 
       // Force re-render to update component with new form state
-      rerender(
-        <ProjectForm
-          form={mockFormAsProjectFormData}
-          onSubmit={mockOnSubmit}
-          isSubmitting={false}
-          onCancel={mockOnCancel}
-          mode="create"
-        />
-      );
+      await act(async () => {
+        rerender(
+          <ProjectForm
+            form={mockFormAsProjectFormData}
+            onSubmit={mockOnSubmit}
+            isSubmitting={false}
+            onCancel={mockOnCancel}
+            mode="create"
+          />
+        );
+      });
 
       // Wait for form state to update and button to be enabled
       await waitFor(

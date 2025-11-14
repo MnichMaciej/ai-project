@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useProjectForm, transformFormData, mapServerErrorsToForm } from "@/lib/hooks/useProjectForm";
 import { ProjectStatus } from "@/types";
 import { toast } from "sonner";
@@ -33,6 +33,9 @@ vi.mock("@/lib/services/project.service", () => ({
 
 describe("useProjectForm", () => {
   beforeEach(() => {
+    // Suppress console.error output during tests (expected errors are being tested)
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    
     vi.clearAllMocks();
     mockLocation.href = "";
   });
@@ -110,13 +113,17 @@ describe("useProjectForm", () => {
 
       vi.mocked(projectService.createProject).mockResolvedValue(mockProject);
 
-      result.current.form.setValue("name", "Test Project");
-      result.current.form.setValue("description", "Description");
-      result.current.form.setValue("technologies", ["React"]);
-      result.current.form.setValue("status", ProjectStatus.PLANNING);
+      await act(async () => {
+        result.current.form.setValue("name", "Test Project");
+        result.current.form.setValue("description", "Description");
+        result.current.form.setValue("technologies", ["React"]);
+        result.current.form.setValue("status", ProjectStatus.PLANNING);
+      });
 
       // Act
-      await result.current.onSubmit(result.current.form.getValues());
+      await act(async () => {
+        await result.current.onSubmit(result.current.form.getValues());
+      });
 
       // Assert
       await waitFor(() => {
@@ -147,13 +154,17 @@ describe("useProjectForm", () => {
 
       vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
-      result.current.form.setValue("name", "Test");
-      result.current.form.setValue("description", "Description");
-      result.current.form.setValue("technologies", ["React"]);
-      result.current.form.setValue("status", ProjectStatus.PLANNING);
+      await act(async () => {
+        result.current.form.setValue("name", "Test");
+        result.current.form.setValue("description", "Description");
+        result.current.form.setValue("technologies", ["React"]);
+        result.current.form.setValue("status", ProjectStatus.PLANNING);
+      });
 
       // Act
-      await result.current.onSubmit(result.current.form.getValues());
+      await act(async () => {
+        await result.current.onSubmit(result.current.form.getValues());
+      });
 
       // Assert
       await waitFor(() => {
@@ -173,13 +184,17 @@ describe("useProjectForm", () => {
 
       vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
-      result.current.form.setValue("name", "Test");
-      result.current.form.setValue("description", "Description");
-      result.current.form.setValue("technologies", ["React"]);
-      result.current.form.setValue("status", ProjectStatus.PLANNING);
+      await act(async () => {
+        result.current.form.setValue("name", "Test");
+        result.current.form.setValue("description", "Description");
+        result.current.form.setValue("technologies", ["React"]);
+        result.current.form.setValue("status", ProjectStatus.PLANNING);
+      });
 
       // Act
-      await result.current.onSubmit(result.current.form.getValues());
+      await act(async () => {
+        await result.current.onSubmit(result.current.form.getValues());
+      });
 
       // Assert
       await waitFor(() => {
@@ -200,13 +215,17 @@ describe("useProjectForm", () => {
 
       vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
-      result.current.form.setValue("name", "Test");
-      result.current.form.setValue("description", "Description");
-      result.current.form.setValue("technologies", ["React"]);
-      result.current.form.setValue("status", ProjectStatus.PLANNING);
+      await act(async () => {
+        result.current.form.setValue("name", "Test");
+        result.current.form.setValue("description", "Description");
+        result.current.form.setValue("technologies", ["React"]);
+        result.current.form.setValue("status", ProjectStatus.PLANNING);
+      });
 
       // Act
-      await result.current.onSubmit(result.current.form.getValues());
+      await act(async () => {
+        await result.current.onSubmit(result.current.form.getValues());
+      });
 
       // Assert
       await waitFor(() => {
@@ -226,13 +245,17 @@ describe("useProjectForm", () => {
 
       vi.mocked(projectService.createProject).mockRejectedValue(apiError);
 
-      result.current.form.setValue("name", "Test");
-      result.current.form.setValue("description", "Description");
-      result.current.form.setValue("technologies", ["React"]);
-      result.current.form.setValue("status", ProjectStatus.PLANNING);
+      await act(async () => {
+        result.current.form.setValue("name", "Test");
+        result.current.form.setValue("description", "Description");
+        result.current.form.setValue("technologies", ["React"]);
+        result.current.form.setValue("status", ProjectStatus.PLANNING);
+      });
 
       // Act
-      await result.current.onSubmit(result.current.form.getValues());
+      await act(async () => {
+        await result.current.onSubmit(result.current.form.getValues());
+      });
 
       // Assert
       await waitFor(() => {
