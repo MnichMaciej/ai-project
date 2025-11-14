@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Edit, Trash2, ExternalLink, Github, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit, Trash2, ExternalLink, Github, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ProjectDto, ProjectStatus } from "@/types";
 
 interface ProjectCardProps {
@@ -51,6 +52,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isDescriptionTruncated, setIsDescriptionTruncated] = useState(false);
+  const [isImageValid, setIsImageValid] = useState<boolean | null>(null);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,6 +75,15 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
     return () => window.removeEventListener("resize", checkTruncation);
   }, [project.description]);
 
+  // Reset image validation state when previewUrl changes
+  useEffect(() => {
+    if (project.previewUrl) {
+      setIsImageValid(null);
+    } else {
+      setIsImageValid(false);
+    }
+  }, [project.previewUrl]);
+
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
   };
@@ -86,12 +97,57 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
     onEdit(project.id);
   };
 
+  const handleImageLoad = () => {
+    setIsImageValid(true);
+  };
+
+  const handleImageError = () => {
+    setIsImageValid(false);
+  };
+
   return (
     <>
       <Card className="flex flex-col h-full transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/50 duration-300 py-3 md:py-6 gap-3 md:gap-6">
         <CardHeader className="px-3 md:px-6">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg md:text-xl drop-shadow-sm">{project.name}</CardTitle>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* Hidden image for validation - checks if image can be loaded */}
+              {project.previewUrl && (
+                <img
+                  src={project.previewUrl}
+                  alt=""
+                  className="hidden"
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  aria-hidden="true"
+                />
+              )}
+              {/* Project icon - show when image loads successfully */}
+              {project.previewUrl && isImageValid === true && (
+                <img
+                  src={project.previewUrl}
+                  alt={`Ikona projektu ${project.name}`}
+                  className="size-8 md:size-10 flex-shrink-0 rounded object-cover border border-border shadow-sm"
+                  loading="lazy"
+                />
+              )}
+              {/* Error indicator - show when previewUrl exists but image failed to load */}
+              {project.previewUrl && isImageValid === false && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex-shrink-0" role="status" aria-label="Nie można wyświetlić ikony projektu">
+                        <AlertCircle className="size-4 md:size-5 text-destructive" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Nie można wyświetlić ikony projektu</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <CardTitle className="text-lg md:text-xl drop-shadow-sm">{project.name}</CardTitle>
+            </div>
             <Badge variant={getStatusVariant(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
           <div className="group relative">
