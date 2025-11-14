@@ -35,7 +35,7 @@ describe("useProjectForm", () => {
   beforeEach(() => {
     // Suppress console.error output during tests (expected errors are being tested)
     vi.spyOn(console, "error").mockImplementation(() => {});
-    
+
     vi.clearAllMocks();
     mockLocation.href = "";
   });

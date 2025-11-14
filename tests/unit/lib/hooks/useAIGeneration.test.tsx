@@ -88,7 +88,7 @@ describe("useAIGeneration", () => {
   beforeEach(() => {
     // Suppress console.error output during tests (expected errors are being tested)
     vi.spyOn(console, "error").mockImplementation(() => {});
-    
+
     vi.clearAllMocks();
     mockLocation.href = "";
 
@@ -386,7 +386,7 @@ describe("useAIGeneration", () => {
             queryCount: 1,
           }),
         } as Response);
-        await generatePromise!;
+        await generatePromise;
       });
 
       await waitFor(() => {

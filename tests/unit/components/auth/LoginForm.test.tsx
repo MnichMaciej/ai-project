@@ -26,7 +26,7 @@ describe("LoginForm", () => {
   beforeEach(() => {
     // Suppress console.error output during tests (expected errors are being tested)
     vi.spyOn(console, "error").mockImplementation(() => {});
-    
+
     vi.clearAllMocks();
 
     mockOnSubmit = vi.fn().mockResolvedValue(undefined);

@@ -60,11 +60,14 @@ describe("AIGenerateButton", () => {
       await user.hover(button);
 
       // Assert - wait for tooltip to appear, use getAllByText and check first one
-      await waitFor(async () => {
-        const tooltips = await screen.findAllByText(/osiągnięto limit.*5.*zapytań/i);
-        expect(tooltips.length).toBeGreaterThan(0);
-        expect(tooltips[0]).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        async () => {
+          const tooltips = await screen.findAllByText(/osiągnięto limit.*5.*zapytań/i);
+          expect(tooltips.length).toBeGreaterThan(0);
+          expect(tooltips[0]).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it("should not show tooltip when not disabled", async () => {

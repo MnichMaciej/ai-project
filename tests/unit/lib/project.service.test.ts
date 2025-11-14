@@ -30,7 +30,7 @@ describe("ProjectService", () => {
   beforeEach(() => {
     // Suppress console.error output during tests (expected errors are being tested)
     vi.spyOn(console, "error").mockImplementation(() => {});
-    
+
     mockSupabase = createMockSupabaseClient();
     mockQuery = (mockSupabase as any).from("projects");
     projectService = new ProjectService(mockSupabase);
