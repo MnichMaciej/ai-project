@@ -2,7 +2,8 @@ import React from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, InfoIcon } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 
 // Form data types - matches the schema from hooks
@@ -128,6 +129,17 @@ export function ProjectForm({
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 md:space-y-6 px-3 md:px-6">
+            {mode === "create" && (
+              <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+                <InfoIcon className="text-blue-600 dark:text-blue-400" />
+                <AlertTitle className="text-blue-900 dark:text-blue-100">
+                  Funkcja AI dostępna po utworzeniu projektu
+                </AlertTitle>
+                <AlertDescription className="text-blue-800 dark:text-blue-200">
+                  Wypełnienie technologii i opisu za pomocą AI będzie dostępne dopiero na etapie edycji projektu. Najpierw utwórz projekt, a następnie przejdź do jego edycji, aby skorzystać z asystenta AI.
+                </AlertDescription>
+              </Alert>
+            )}
             <ProjectFormFields
               mode={mode}
               projectId={projectId}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, Trash2, ExternalLink, Github } from "lucide-react";
+import { Edit, Trash2, ExternalLink, Github, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ function getStatusVariant(status: ProjectStatus): "default" | "secondary" | "des
  */
 export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
@@ -72,10 +73,28 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
             <Badge variant={getStatusVariant(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
           <div className="group relative">
-            <CardDescription className="line-clamp-2 text-xs md:text-sm">{project.description}</CardDescription>
-            <div className="absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+            {/* Description - always clamped on desktop, conditionally on mobile */}
+            <CardDescription className={`${!isDescriptionExpanded ? "line-clamp-2" : ""} md:line-clamp-2 text-xs md:text-sm`}>{project.description}</CardDescription>
+            
+            {/* Desktop: hover overlay */}
+            <div className="hidden md:block absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
               <CardDescription className="m-0">{project.description}</CardDescription>
             </div>
+            
+            {/* Mobile: expand/collapse button */}
+            <button
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              className="md:hidden mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={isDescriptionExpanded ? "Zwiń opis" : "Rozwiń opis"}
+              aria-expanded={isDescriptionExpanded}
+            >
+              <span>{isDescriptionExpanded ? "Zwiń" : "Rozwiń"}</span>
+              {isDescriptionExpanded ? (
+                <ChevronUp className="size-3" />
+              ) : (
+                <ChevronDown className="size-3" />
+              )}
+            </button>
           </div>
         </CardHeader>
 
