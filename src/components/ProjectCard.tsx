@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Edit, Trash2, ExternalLink, Github, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,28 @@ function getStatusVariant(status: ProjectStatus): "default" | "secondary" | "des
 export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionTruncated, setIsDescriptionTruncated] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (descriptionRef.current) {
+        // Get the actual CardDescription element (first child div)
+        const descriptionElement = descriptionRef.current.querySelector(
+          '[data-slot="card-description"]'
+        ) as HTMLElement;
+        if (descriptionElement) {
+          // Check if text is truncated by comparing scrollHeight with clientHeight
+          setIsDescriptionTruncated(descriptionElement.scrollHeight > descriptionElement.clientHeight);
+        }
+      }
+    };
+
+    checkTruncation();
+    // Re-check on window resize
+    window.addEventListener("resize", checkTruncation);
+    return () => window.removeEventListener("resize", checkTruncation);
+  }, [project.description]);
 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
@@ -74,16 +96,20 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           </div>
           <div className="group relative">
             {/* Description - always clamped on desktop, conditionally on mobile */}
-            <CardDescription
-              className={`${!isDescriptionExpanded ? "line-clamp-2" : ""} md:line-clamp-2 text-xs md:text-sm`}
-            >
-              {project.description}
-            </CardDescription>
-
-            {/* Desktop: hover overlay */}
-            <div className="hidden md:block absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-              <CardDescription className="m-0">{project.description}</CardDescription>
+            <div ref={descriptionRef}>
+              <CardDescription
+                className={`${!isDescriptionExpanded ? "line-clamp-2" : ""} md:line-clamp-2 text-xs md:text-sm`}
+              >
+                {project.description}
+              </CardDescription>
             </div>
+
+            {/* Desktop: hover overlay - only show if text is truncated */}
+            {isDescriptionTruncated && (
+              <div className="hidden md:block absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <CardDescription className="m-0">{project.description}</CardDescription>
+              </div>
+            )}
 
             {/* Mobile: expand/collapse button */}
             <button
