@@ -5,7 +5,7 @@ interface ProjectsListProps {
   projects: ProjectDto[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  lastItemRef?: React.RefObject<HTMLDivElement>;
+  lastItemRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**

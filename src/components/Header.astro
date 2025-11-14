@@ -19,19 +19,30 @@ const isAuthenticated = !!user;
 <header class="border-b hidden md:block bg-background/60 backdrop-blur-xl shadow-sm">
   <div class="container mx-auto px-4 py-4">
     <nav class="flex items-center justify-between">
-      <a href="/" class="text-xl font-bold text-foreground hover:text-primary transition-all cursor-pointer relative group inline-block">
-        <span class="relative z-10">Portfolio Manager</span>
-        <span class="absolute bottom-0 left-0 w-full h-1 emerald-gradient rounded-full transform origin-left transition-transform group-hover:scale-x-100 scale-x-75"></span>
+      <a
+        href="/"
+        class="text-xl font-bold text-foreground hover:text-primary transition-all cursor-pointer relative group inline-block"
+      >
+        <span class="relative z-10">Portfol.io</span>
+        <span
+          class="absolute bottom-0 left-0 w-full h-1 emerald-gradient rounded-full transform origin-left transition-transform group-hover:scale-x-100 scale-x-75"
+        ></span>
       </a>
       <div class="flex items-center gap-4">
         {
           isAuthenticated ? (
             <>
-              <a href="/projects" class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm">
+              <a
+                href="/projects"
+                class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm"
+              >
                 {" "}
                 Projekty{" "}
               </a>
-              <a href="/projects/new" class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm">
+              <a
+                href="/projects/new"
+                class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm"
+              >
                 {" "}
                 Dodaj projekt{" "}
               </a>
@@ -75,11 +86,17 @@ const isAuthenticated = !!user;
             </>
           ) : (
             <>
-              <a href="/auth/login" class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm">
+              <a
+                href="/auth/login"
+                class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm"
+              >
                 {" "}
                 Zaloguj{" "}
               </a>
-              <a href="/auth/register" class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm">
+              <a
+                href="/auth/register"
+                class="text-sm hover:text-primary transition-colors cursor-pointer font-medium drop-shadow-sm"
+              >
                 {" "}
                 Zarejestruj{" "}
               </a>

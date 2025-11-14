@@ -42,6 +42,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: request.headers,
     });
 
+    // Validate that supabase client is properly initialized
+    if (!supabase || typeof supabase.auth === "undefined") {
+      console.error("Supabase client not properly initialized");
+      return new Response(
+        JSON.stringify({
+          error: "Błąd konfiguracji serwera. Spróbuj ponownie później.",
+        } as AuthErrorResponseDto),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // First, check if account is locked by querying users table
     // We need to find user ID from email - use a database function or RPC
     // For now, we'll try sign in first and handle errors
@@ -66,19 +80,42 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // 3. Lock account if attempts >= 5
       // 4. Return current failed attempts count
 
-      // Type assertion needed because RPC function is not yet in database types
-      const rpcCall = supabase.rpc as unknown as (
-        name: string,
-        args: { user_email: string }
-      ) => Promise<{ data: IncrementFailedLoginAttemptsResponse | null; error: unknown }>;
+      // Call RPC function directly - handle case where function might not exist
+      let rpcResult: IncrementFailedLoginAttemptsResponse | null = null;
+      let rpcError: unknown = null;
 
-      const { data: rpcResult, error: rpcError } = await rpcCall("increment_failed_login_attempts", {
-        user_email: email,
-      });
+      // Check if rpc method exists before calling
+      if (supabase && typeof supabase.rpc === "function") {
+        try {
+          // Type assertion needed because RPC function is not yet in database types
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data, error } = await (supabase.rpc as any)("increment_failed_login_attempts", {
+            user_email: email,
+          });
+
+          if (error) {
+            rpcError = error;
+            console.error("RPC error:", error);
+          } else {
+            // Parse the jsonb response from the function
+            // The function returns jsonb with failed_attempts and locked fields
+            rpcResult = data as IncrementFailedLoginAttemptsResponse | null;
+            console.log("RPC result:", rpcResult);
+          }
+        } catch (error) {
+          // RPC function might not exist or there's an error calling it
+          rpcError = error;
+          console.error("RPC call exception:", error);
+        }
+      } else {
+        // RPC method not available - log and continue with default error handling
+        console.warn("Supabase RPC method not available");
+        rpcError = new Error("RPC method not available");
+      }
 
       if (rpcError) {
         // RPC function might not exist yet - return generic error
-        console.error("RPC error:", rpcError);
+        console.error("RPC error occurred, using default failed attempts:", rpcError);
         return new Response(
           JSON.stringify({
             error:
@@ -94,6 +131,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         );
       }
 
+      // Extract values from RPC result (jsonb response)
       const failedAttempts = rpcResult?.failed_attempts ?? 1;
       const isLocked = rpcResult?.locked ?? false;
 

@@ -71,7 +71,12 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
             <CardTitle className="text-lg md:text-xl drop-shadow-sm">{project.name}</CardTitle>
             <Badge variant={getStatusVariant(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
-          <CardDescription className="line-clamp-2 text-xs md:text-sm">{project.description}</CardDescription>
+          <div className="group relative">
+            <CardDescription className="line-clamp-2 text-xs md:text-sm">{project.description}</CardDescription>
+            <div className="absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              <CardDescription className="m-0">{project.description}</CardDescription>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="flex-1 px-3 md:px-6">

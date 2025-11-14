@@ -102,7 +102,7 @@ export function ProjectsView() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Ref for last item in list (for infinite scroll)
-  const lastItemRef = useRef<HTMLDivElement>(null);
+  const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const handleAddProject = useCallback(() => {
     // Navigate to create project page
@@ -187,24 +187,8 @@ export function ProjectsView() {
     [deletingId, refetch, projects.length, offset, limit]
   );
 
-  // Loading state
-  if (loading && projects.length === 0) {
-    return (
-      <>
-        <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 pb-24 md:pb-8 animate-in fade-in duration-300">
-          <div className="mb-4 md:mb-6">
-            <div className="h-9 w-48 bg-muted animate-pulse rounded-md mb-2" />
-            <div className="h-5 w-32 bg-muted animate-pulse rounded-md" />
-          </div>
-          <SkeletonGrid count={6} />
-        </div>
-        <MobileBottomNav />
-      </>
-    );
-  }
-
-  // Error state
-  if (error && projects.length === 0) {
+  // Error state - show full error screen only when there's an error and no projects
+  if (error && projects.length === 0 && !loading) {
     return (
       <>
         <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 pb-24 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -235,7 +219,7 @@ export function ProjectsView() {
     );
   }
 
-  // Projects list
+  // Projects list - always show header, conditionally show skeleton or list
   return (
     <>
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 pb-24 md:pb-8 animate-in fade-in duration-300">
@@ -243,9 +227,11 @@ export function ProjectsView() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold drop-shadow-sm">Moje projekty</h1>
             <p className="text-foreground/80 mt-1 text-sm md:text-base font-medium drop-shadow-sm">
-              {debouncedSearchQuery.trim()
-                ? `${projects.length} z ${total} ${total === 1 ? "projektu" : "projektów"}`
-                : `${total} ${total === 1 ? "projekt" : total < 5 && total > 1 ? "projekty" : "projektów"}`}
+              {loading && projects.length === 0
+                ? "—"
+                : debouncedSearchQuery.trim()
+                  ? `${projects.length} z ${total} ${total === 1 ? "projektu" : "projektów"}`
+                  : `${total} ${total === 1 ? "projekt" : total < 5 && total > 1 ? "projekty" : "projektów"}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -273,7 +259,7 @@ export function ProjectsView() {
           </div>
         </div>
 
-        {error && (
+        {error && projects.length > 0 && (
           <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 md:px-4 md:py-3 rounded-md mb-4 md:mb-6 flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
             <AlertCircle className="size-5" />
             <span>{error}</span>
@@ -288,9 +274,14 @@ export function ProjectsView() {
           </div>
         )}
 
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <ProjectsList projects={projects} onEdit={handleEdit} onDelete={handleDelete} lastItemRef={lastItemRef} />
-        </div>
+        {/* Show skeleton loader only when loading and no projects yet */}
+        {loading && projects.length === 0 ? (
+          <SkeletonGrid count={6} />
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <ProjectsList projects={projects} onEdit={handleEdit} onDelete={handleDelete} lastItemRef={lastItemRef} />
+          </div>
+        )}
 
         {/* Loading more indicator */}
         {loadingMore && (

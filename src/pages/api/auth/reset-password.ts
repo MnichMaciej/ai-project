@@ -35,6 +35,38 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: request.headers,
     });
 
+    // Check if account is locked before allowing password reset
+    try {
+      // Use RPC function to check if account is locked
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: lockStatus, error: rpcError } = await (supabase.rpc as any)("check_account_locked", {
+        user_email: email,
+      });
+
+      if (!rpcError && lockStatus) {
+        const isLocked = lockStatus.locked === true;
+
+        if (isLocked) {
+          return new Response(
+            JSON.stringify({
+              error:
+                "Konto zostało zablokowane. Skontaktuj się z administratorem, aby odblokować konto przed resetowaniem hasła.",
+            } as AuthErrorResponseDto),
+            {
+              status: 403,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+      } else if (rpcError) {
+        // Log RPC error but continue (don't block reset for technical issues)
+        console.error("Error checking account lock status:", rpcError);
+      }
+    } catch (checkError) {
+      // If check fails, log but continue (don't block reset for technical issues)
+      console.error("Error checking account lock status:", checkError);
+    }
+
     // Get the base URL from the request to construct redirect URL
     const url = new URL(request.url);
     const baseUrl = `${url.protocol}//${url.host}`;

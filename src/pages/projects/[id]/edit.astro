@@ -15,6 +15,6 @@ const supabase =
 const isAIEnabled = await checkFeatureFlagDirectly(supabase, FeatureFlags.AI_GENERATION);
 ---
 
-<Layout title="Edytuj projekt - Portfolio Manager">
+<Layout title="Edytuj projekt - Portfol.io">
   <ProjectEditView client:load projectId={Astro.params.id || ""} isAIEnabled={isAIEnabled} />
 </Layout>
