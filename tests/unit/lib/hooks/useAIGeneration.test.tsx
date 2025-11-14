@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useAIGeneration } from "@/lib/hooks/useAIGeneration";
 import { toast } from "sonner";
+import type { CreateProjectFormData } from "@/lib/hooks/useProjectForm";
+import type { UpdateProjectFormData } from "@/lib/hooks/useProjectEditForm";
+import type { UseFormReturn } from "react-hook-form";
 
 // Mock sonner toast
 vi.mock("sonner", () => ({
@@ -45,19 +48,38 @@ const createMockForm = () => {
     if (field) {
       return (formState as Record<string, unknown>)[field];
     }
-    return { ...formState };
+    return { ...formState } as CreateProjectFormData;
   });
 
   return {
     setValue: setValueFn,
     getValues: getValuesFn,
+    watch: vi.fn(),
+    getFieldState: vi.fn(),
+    clearErrors: vi.fn(),
+    resetField: vi.fn(),
+    reset: vi.fn(),
+    handleSubmit: vi.fn(),
+    control: {} as unknown,
+    register: vi.fn(),
+    unregister: vi.fn(),
+    setFocus: vi.fn(),
+    subscribe: vi.fn(),
     formState: {
       errors: {},
       touchedFields: {},
+      isDirty: false,
+      dirtyFields: {},
+      defaultValues: {},
+      isSubmitted: false,
+      isSubmitSuccessful: false,
+      isValid: true,
+      isValidating: false,
+      submitCount: 0,
     },
     trigger: vi.fn(),
     setError: vi.fn(),
-  };
+  } as unknown as UseFormReturn<CreateProjectFormData | UpdateProjectFormData>;
 };
 
 describe("useAIGeneration", () => {

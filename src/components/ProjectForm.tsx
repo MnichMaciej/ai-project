@@ -1,4 +1,3 @@
-import React from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,7 +135,8 @@ export function ProjectForm({
                   Funkcja AI dostępna po utworzeniu projektu
                 </AlertTitle>
                 <AlertDescription className="text-blue-800 dark:text-blue-200">
-                  Wypełnienie technologii i opisu za pomocą AI będzie dostępne dopiero na etapie edycji projektu. Najpierw utwórz projekt, a następnie przejdź do jego edycji, aby skorzystać z asystenta AI.
+                  Wypełnienie technologii i opisu za pomocą AI będzie dostępne dopiero na etapie edycji projektu.
+                  Najpierw utwórz projekt, a następnie przejdź do jego edycji, aby skorzystać z asystenta AI.
                 </AlertDescription>
               </Alert>
             )}

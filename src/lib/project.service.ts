@@ -56,7 +56,7 @@ export class ProjectService {
       }
 
       // Map database results to DTOs
-      let projects: ProjectDto[] = data.map((project: ProjectRow) => {
+      let projects = data.map((project: ProjectRow): ProjectDto => {
         // Validate status is a valid ProjectStatus
         if (!Object.values(ProjectStatus).includes(project.status as ProjectStatus)) {
           throw new Error(`Invalid project status: ${project.status}`);
@@ -71,8 +71,8 @@ export class ProjectService {
           repoUrl: project.repo_url ?? null,
           demoUrl: project.demo_url ?? null,
           previewUrl: project.preview_url ?? null,
-          createdAt: project.created_at,
-          updatedAt: project.updated_at,
+          createdAt: project.created_at ?? "",
+          updatedAt: project.updated_at ?? "",
         };
       });
 
@@ -162,8 +162,8 @@ export class ProjectService {
         repoUrl: data.repo_url ?? null,
         demoUrl: data.demo_url ?? null,
         previewUrl: data.preview_url ?? null,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        createdAt: data.created_at ?? "",
+        updatedAt: data.updated_at ?? "",
       };
 
       return projectDto;
@@ -239,8 +239,8 @@ export class ProjectService {
         repoUrl: updatedProject.repo_url ?? null,
         demoUrl: updatedProject.demo_url ?? null,
         previewUrl: updatedProject.preview_url ?? null,
-        createdAt: updatedProject.created_at,
-        updatedAt: updatedProject.updated_at,
+        createdAt: updatedProject.created_at ?? "",
+        updatedAt: updatedProject.updated_at ?? "",
       };
 
       return projectDto;

@@ -74,13 +74,17 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
           </div>
           <div className="group relative">
             {/* Description - always clamped on desktop, conditionally on mobile */}
-            <CardDescription className={`${!isDescriptionExpanded ? "line-clamp-2" : ""} md:line-clamp-2 text-xs md:text-sm`}>{project.description}</CardDescription>
-            
+            <CardDescription
+              className={`${!isDescriptionExpanded ? "line-clamp-2" : ""} md:line-clamp-2 text-xs md:text-sm`}
+            >
+              {project.description}
+            </CardDescription>
+
             {/* Desktop: hover overlay */}
             <div className="hidden md:block absolute -top-2 -left-2 -right-2 bg-card border border-border rounded-md p-2 text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
               <CardDescription className="m-0">{project.description}</CardDescription>
             </div>
-            
+
             {/* Mobile: expand/collapse button */}
             <button
               onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
@@ -89,11 +93,7 @@ export function ProjectCard({ project, onEdit, onDelete }: ProjectCardProps) {
               aria-expanded={isDescriptionExpanded}
             >
               <span>{isDescriptionExpanded ? "Zwiń" : "Rozwiń"}</span>
-              {isDescriptionExpanded ? (
-                <ChevronUp className="size-3" />
-              ) : (
-                <ChevronDown className="size-3" />
-              )}
+              {isDescriptionExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
             </button>
           </div>
         </CardHeader>
