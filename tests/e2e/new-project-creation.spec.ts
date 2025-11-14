@@ -8,6 +8,7 @@ test.describe("New Project Creation", () => {
 
     // Arrange: Navigate to the new project page
     await newProjectPage.goto();
+    await page.waitForLoadState("networkidle");
     await newProjectPage.isOnPage();
 
     // Act: Fill all required fields

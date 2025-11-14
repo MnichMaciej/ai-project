@@ -49,27 +49,23 @@ export class NewProjectPage {
 
   async fillProjectName(name: string) {
     const input = this.page.getByTestId("project-name-input");
-    await input.click(); // Focus the input
     await input.fill(name);
-    // Wait for the value to be set and React Hook Form to process it
     await expect(input).toHaveValue(name);
-    // Wait a bit for React Hook Form to finish processing the onChange event
-    await this.page.waitForTimeout(50);
   }
 
   async fillDescription(description: string) {
     const textarea = this.page.getByTestId("project-description-textarea");
-    await textarea.click(); // Focus the textarea
     await textarea.fill(description);
-    // Wait for the value to be set and React Hook Form to process it
     await expect(textarea).toHaveValue(description);
-    // Wait a bit for React Hook Form to finish processing the onChange event
-    await this.page.waitForTimeout(50);
   }
 
   async addTechnology(technology: string) {
-    await this.page.getByTestId("new-technology-input").fill(technology);
-    await this.page.getByTestId("add-technology-button").click();
+    const input = this.page.getByTestId("new-technology-input");
+    await input.fill(technology);
+    await expect(input).toHaveValue(technology);
+    const button = this.page.getByTestId("add-technology-button");
+    await expect(button).toBeEnabled();
+    await button.click();
   }
 
   async selectStatus(status: ProjectStatus) {
@@ -86,15 +82,18 @@ export class NewProjectPage {
   }
 
   async fillRepoUrl(url: string) {
-    await this.page.getByTestId("project-repo-url-input").fill(url);
+    const input = this.page.getByTestId("project-repo-url-input");
+    await input.fill(url);
   }
 
   async fillDemoUrl(url: string) {
-    await this.page.getByTestId("project-demo-url-input").fill(url);
+    const input = this.page.getByTestId("project-demo-url-input");
+    await input.fill(url);
   }
 
   async fillPreviewUrl(url: string) {
-    await this.page.getByTestId("project-preview-url-input").fill(url);
+    const input = this.page.getByTestId("project-preview-url-input");
+    await input.fill(url);
   }
 
   async clickCancel() {
